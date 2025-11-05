@@ -1,36 +1,21 @@
 {
-  "id": "/",
-  "name": "記録アプリ — 日記 / 予定 / 検索 / スケジュール調整",
-  "short_name": "記録アプリ",
-  "lang": "ja",
-  "dir": "ltr",
+  "name": "是々日々",
+  "short_name": "是々日々",
   "start_url": "./index.html",
-  "scope": "./",
   "display": "standalone",
-  "orientation": "any",
-  "background_color": "#ffffff",
-  "theme_color": "#5b8def",
-  "categories": ["productivity", "utilities"],
-  "description": "日記・予定・検索・スケジュール調整をひとまとめに。PCとiPhoneで使えるPWA。",
+  "background_color": "#0f1115",
+  "theme_color": "#0f1115",
+  "description": "日々を静かに見つめ直すための、最小で最大の個人用アプリ。",
   "icons": [
     {
       "src": "icons/icon-192.png",
       "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any"
+      "type": "image/png"
     },
     {
       "src": "icons/icon-512.png",
       "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "icons/maskable-512.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "maskable any"
+      "type": "image/png"
     }
-  ],
-  "prefer_related_applications": false
+  ]
 }
