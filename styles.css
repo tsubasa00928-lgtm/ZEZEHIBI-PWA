@@ -246,3 +246,17 @@ header,
 main {
   width: 100%;
 }
+.icon-btn {
+  border: none;
+  background: transparent;
+  color: #c8d4e6;
+  font-size: 20px;
+  cursor: pointer;
+  padding: 4px 6px;
+  margin-left: 6px;
+}
+
+.icon-btn:hover {
+  color: #ffffff;
+}
+
