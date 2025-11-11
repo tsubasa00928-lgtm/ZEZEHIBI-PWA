@@ -3,190 +3,236 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="theme-color" content="#f3f5fb" />
+  <meta name="theme-color" content="#111111" />
   <title>是々日々</title>
 
   <!-- PWA -->
   <link rel="manifest" href="manifest.webmanifest" />
-  <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png" />
+  <link rel="icon" sizes="192x192" href="icon-192.png" />
+  <link rel="icon" sizes="512x512" href="icon-512.png" />
   <link rel="apple-touch-icon" href="icon-512.png" />
 
-  <!-- Styles -->
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <div class="app">
-    <!-- ヘッダー（テキスト削除版） -->
-    <header class="app-header">
-      <div class="app-header-left">
-        <!-- 必要ならロゴだけここに：例）<div class="logo-dot"></div> -->
+  <noscript>このアプリを利用するにはJavaScriptを有効にしてください。</noscript>
+
+  <!-- ヘッダー -->
+  <header class="top-bar">
+    <div class="top-title">是々日々</div>
+    <div class="top-today" id="todayLabel"></div>
+  </header>
+
+  <!-- 画面本体 -->
+  <main>
+
+    <!-- 日記（月カレンダー + 日別） -->
+    <section id="screenDiary" class="screen screen-active">
+      <div class="month-header">
+        <button id="dPrevM" class="nav-btn">‹</button>
+        <div id="dMonthLabel" class="month-label"></div>
+        <button id="dNextM" class="nav-btn">›</button>
       </div>
-      <div class="app-header-right">
-        <div id="todayBadge" class="today-badge"></div>
-        <button id="btnSettingsShortcut" class="icon-gear" type="button">⚙</button>
+
+      <!-- 曜日ヘッダー -->
+      <div class="weekday-row">
+        <div class="wd sun">日</div>
+        <div class="wd">月</div>
+        <div class="wd">火</div>
+        <div class="wd">水</div>
+        <div class="wd">木</div>
+        <div class="wd">金</div>
+        <div class="wd sat">土</div>
       </div>
-    </header>
 
-    <!-- 画面群 -->
-    <main>
-      <!-- ① 日記カレンダー -->
-      <section id="screen-home" class="screen active">
-        <div class="panel panel-calendar">
-          <div class="month-header">
-            <button class="month-nav-btn" id="btnPrevMonth" type="button">‹</button>
-            <strong id="labelMonth"></strong>
-            <button class="month-nav-btn" id="btnNextMonth" type="button">›</button>
+      <!-- カレンダー（隙間ゼロでびっしり） -->
+      <div id="dCalGrid" class="calendar-grid"></div>
+
+      <!-- 選択日の概要 -->
+      <div class="day-summary">
+        <div>
+          <span id="dSelDateLabel" class="badge"></span>
+          <span id="dSelJP"></span>
+        </div>
+        <button id="dNewBtn" class="primary-btn">記録を書く</button>
+      </div>
+
+      <!-- 選択日の一覧 -->
+      <div id="dList" class="card-list"></div>
+
+      <!-- 日記編集モーダル -->
+      <dialog id="dlgDiary" class="modal">
+        <form method="dialog" class="modal-body">
+          <h3 id="dlgDiaryTitle">日記</h3>
+
+          <label class="field-label">
+            日付
+            <input id="diaryDate" type="date" required />
+          </label>
+
+          <div class="grid-3">
+            <label class="field-label">
+              起床
+              <input id="diaryWake" type="time" />
+            </label>
+            <label class="field-label">
+              朝食
+              <input id="diaryBreakfast" type="text" placeholder="例）トースト" />
+            </label>
+            <label class="field-label">
+              昼食/夕食
+              <input id="diaryLunchDinner" type="text" placeholder="例）パスタ / カレー" />
+            </label>
           </div>
 
-          <div class="weekdays">
-            <div>日</div><div>月</div><div>火</div><div>水</div>
-            <div>木</div><div>金</div><div>土</div>
+          <label class="field-label">
+            タイトル
+            <input id="diaryTitle" type="text" />
+          </label>
+
+          <label class="field-label">
+            本文
+            <textarea id="diaryBody" rows="6"></textarea>
+          </label>
+
+          <div class="modal-actions">
+            <button type="button" id="diaryDelete" class="danger-btn">削除</button>
+            <div class="flex-spacer"></div>
+            <button value="cancel" class="sub-btn">キャンセル</button>
+            <button id="diarySave" value="default" class="primary-btn">保存</button>
           </div>
 
-          <div id="calGrid" class="calendar-grid"></div>
-        </div>
-      </section>
+          <input type="hidden" id="diaryId" />
+        </form>
+      </dialog>
+    </section>
 
-      <!-- ② 予定（プレースホルダ） -->
-      <section id="screen-schedule" class="screen">
-        <div class="panel">
-          <h3 class="panel-title">予定一覧</h3>
-          <div id="scheduleList" class="list small-text">
-            （今後の拡張用スペース）
+    <!-- 予定 -->
+    <section id="screenSched" class="screen">
+      <div class="month-header">
+        <button id="sPrevM" class="nav-btn">‹</button>
+        <div id="sMonthLabel" class="month-label"></div>
+        <button id="sNextM" class="nav-btn">›</button>
+      </div>
+
+      <div class="weekday-row">
+        <div class="wd sun">日</div>
+        <div class="wd">月</div>
+        <div class="wd">火</div>
+        <div class="wd">水</div>
+        <div class="wd">木</div>
+        <div class="wd">金</div>
+        <div class="wd sat">土</div>
+      </div>
+
+      <div id="sCalGrid" class="calendar-grid"></div>
+
+      <div class="day-summary">
+        <div>
+          <span id="sSelDateLabel" class="badge"></span>
+          <span id="sSelJP"></span>
+        </div>
+        <button id="sNewBtn" class="primary-btn">予定を追加</button>
+      </div>
+
+      <div id="sList" class="card-list"></div>
+
+      <!-- 予定編集モーダル -->
+      <dialog id="dlgSched" class="modal">
+        <form method="dialog" class="modal-body">
+          <h3>予定</h3>
+
+          <label class="field-label">
+            日付
+            <input id="schDate" type="date" required />
+          </label>
+
+          <div class="grid-2">
+            <label class="field-label">
+              開始
+              <input id="schStart" type="time" />
+            </label>
+            <label class="field-label">
+              終了
+              <input id="schEnd" type="time" />
+            </label>
           </div>
-        </div>
-      </section>
 
-      <!-- ③ 検索 -->
-      <section id="screen-search" class="screen">
-        <div class="panel">
-          <h3 class="panel-title">検索</h3>
-          <input
-            id="searchInput"
-            type="text"
-            placeholder="キーワード（タイトル・本文）"
-            class="editor-input"
-          />
-          <div id="searchResult" class="list small-text" style="margin-top:8px"></div>
-        </div>
-      </section>
+          <label class="field-label">
+            タイトル
+            <input id="schTitle" type="text" required />
+          </label>
 
-      <!-- ④ スケジュール調整（プレースホルダ） -->
-      <section id="screen-coord" class="screen">
-        <div class="panel">
-          <h3 class="panel-title">スケジュール調整</h3>
-          <p class="small-text">
-            帯カレンダーや候補時間共有などを将来的に配置する想定エリア。
-          </p>
-        </div>
-      </section>
+          <label class="field-label">
+            メモ
+            <textarea id="schNote" rows="4"></textarea>
+          </label>
 
-      <!-- ⑤ 設定（インポート／エクスポート） -->
-      <section id="screen-settings" class="screen">
-        <div class="panel">
-          <h3 class="panel-title">設定</h3>
-
-          <div class="small-text">データのバックアップ & 移行</div>
-          <button id="btnExportJSON" class="btn-primary" type="button">
-            データをエクスポート（JSONを表示）
-          </button>
-          <textarea
-            id="exportOutput"
-            class="editor-textarea"
-            placeholder="エクスポート結果"
-            style="margin-top:6px;min-height:120px"
-          ></textarea>
-
-          <div class="small-text" style="margin-top:10px">
-            JSONファイルからインポート（既存データに上書き）
+          <div class="field-inline">
+            <input id="schDone" type="checkbox" />
+            <label for="schDone">完了</label>
           </div>
-          <input
-            id="importFile"
-            type="file"
-            accept="application/json"
-            style="margin:4px 0 6px"
-          />
-          <button id="btnImportJSON" class="btn-danger" type="button">
-            インポートを実行
-          </button>
 
-          <p class="small-text" style="margin-top:8px">
-            データは端末内（ローカルストレージ）に保存されます。<br />
-            バージョン更新では基本的に消えませんが、念のため定期的にエクスポート推奨です。
-          </p>
+          <div class="modal-actions">
+            <button type="button" id="schDelete" class="danger-btn">削除</button>
+            <div class="flex-spacer"></div>
+            <button value="cancel" class="sub-btn">キャンセル</button>
+            <button id="schSave" value="default" class="primary-btn">保存</button>
+          </div>
+
+          <input type="hidden" id="schId" />
+        </form>
+      </dialog>
+    </section>
+
+    <!-- 検索 -->
+    <section id="screenSearch" class="screen">
+      <div class="search-panel">
+        <input id="searchInput" type="text" placeholder="キーワード（タイトル・本文・予定など）" />
+      </div>
+
+      <div class="search-grid">
+        <div>
+          <h3 class="sub-heading">日記</h3>
+          <div id="searchDiary" class="card-list"></div>
         </div>
-      </section>
-    </main>
-  </div>
+        <div>
+          <h3 class="sub-heading">予定</h3>
+          <div id="searchSched" class="card-list"></div>
+        </div>
+      </div>
+    </section>
 
-  <!-- 下タブバー（大きめタップ領域） -->
-  <nav class="tabbar">
-    <button class="tab-btn active" data-target="screen-home" type="button">
-      <span class="icon">📘</span>
-      <span class="label">日記</span>
+    <!-- スケジュール調整（簡略版） -->
+    <section id="screenCoord" class="screen">
+      <div class="coord-header">
+        <div id="coordWeekLabel" class="month-label small"></div>
+        <button id="coordPrev" class="nav-btn">‹</button>
+        <button id="coordNext" class="nav-btn">›</button>
+      </div>
+      <div id="coordBands" class="bands-list">
+        <!-- JSで帯を描画 -->
+      </div>
+    </section>
+
+  </main>
+
+  <!-- 下タブ -->
+  <nav class="tab-bar">
+    <button class="tab-btn tab-active" data-target="screenDiary">
+      <span>日記</span>
     </button>
-    <button class="tab-btn" data-target="screen-schedule" type="button">
-      <span class="icon">📅</span>
-      <span class="label">予定</span>
+    <button class="tab-btn" data-target="screenSched">
+      <span>予定</span>
     </button>
-    <button class="tab-btn" data-target="screen-search" type="button">
-      <span class="icon">🔍</span>
-      <span class="label">検索</span>
+    <button class="tab-btn" data-target="screenSearch">
+      <span>検索</span>
     </button>
-    <button class="tab-btn" data-target="screen-coord" type="button">
-      <span class="icon">⇔</span>
-      <span class="label">調整</span>
-    </button>
-    <button class="tab-btn" data-target="screen-settings" type="button">
-      <span class="icon">⚙</span>
-      <span class="label">設定</span>
+    <button class="tab-btn" data-target="screenCoord">
+      <span>調整</span>
     </button>
   </nav>
 
-  <!-- 記帳用フルスクリーン画面 -->
-  <div id="editorScreen" class="editor-screen">
-    <div class="editor-header">
-      <button id="btnEditorBack" type="button">‹</button>
-      <div>
-        <div class="editor-header-title">日記編集</div>
-        <div id="editorDate" class="editor-date"></div>
-      </div>
-    </div>
-
-    <!-- 起床・食事 -->
-    <div class="meal-block">
-      <label>起床
-        <input id="editorWake" type="time" />
-      </label>
-      <label>朝
-        <input id="editorBreakfast" type="text" placeholder="朝食" />
-      </label>
-      <label>昼
-        <input id="editorLunch" type="text" placeholder="昼食" />
-      </label>
-      <label>夜
-        <input id="editorDinner" type="text" placeholder="夕食" />
-      </label>
-    </div>
-
-    <input
-      id="editorTitle"
-      class="editor-input"
-      placeholder="タイトル"
-    />
-    <textarea
-      id="editorBody"
-      class="editor-textarea"
-      placeholder="今日のこと、気づき、メモなど"
-    ></textarea>
-
-    <div class="editor-actions">
-      <button id="btnDeleteEntry" class="btn-danger" type="button">削除</button>
-      <button id="btnSaveEntry" class="btn-primary" type="button">保存して戻る</button>
-    </div>
-  </div>
-
-  <!-- JS（前回の app.js そのまま利用OK） -->
-  <script src="app.js" defer></script>
+  <script src="app.js"></script>
 </body>
 </html>
