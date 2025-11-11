@@ -1,379 +1,237 @@
 :root {
-  --bg-main: #05070a;
-  --bg-card: #11141a;
-  --bg-card-soft: #181c24;
-  --accent: #3fa7ff;
-  --accent-soft: #2c7dd6;
-  --text-main: #ffffff;
-  --text-sub: #9aa0b5;
-  --danger: #ff5c7a;
-  --radius-card: 18px;
-  --shadow-soft: 0 10px 25px rgba(0, 0, 0, 0.55);
-  --font: -apple-system, system-ui, -system-ui, BlinkMacSystemFont, "SF Pro JP", sans-serif;
-}
-
-/* 基本 */
-
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-}
-
-html,
-body {
-  margin: 0;
-  padding: 0;
-  width: 100%;
-  height: 100%;
+  --bg: #f5f6fa;
+  --bg-soft: #ffffff;
+  --accent: #2f70ff;
+  --accent-soft: #dbe6ff;
+  --accent-text: #174099;
+  --text-main: #222;
+  --text-weak: #777;
+  --border-soft: #e0e4ee;
+  --today: #ffeb99;
+  --radius-xl: 26px;
+  --radius-md: 14px;
+  --shadow-soft: 0 8px 24px rgba(15, 23, 42, 0.10);
+  --nav-height: 80px;
+  --font-sans: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", -system-ui, sans-serif;
 }
 
 body {
-  font-family: var(--font);
-  background-color: var(--bg-main);
+  font-family: var(--font-sans);
+  background: radial-gradient(circle at top, #eef3ff 0, #f5f6fa 40%, #eef2ff 100%);
   color: var(--text-main);
-  -webkit-font-smoothing: antialiased;
+  margin: 0;
 }
 
-.app-root {
+/* レイアウト全体 */
+.app-shell {
   min-height: 100vh;
-  padding-bottom: env(safe-area-inset-bottom, 16px);
+  max-width: 480px;
+  margin: 0 auto;
   display: flex;
   flex-direction: column;
 }
 
-/* ヘッダー */
-
+/* 上部バー */
 .top-bar {
-  padding: 10px 14px 4px;
-  padding-top: calc(env(safe-area-inset-top, 0px) + 6px);
   display: flex;
-  align-items: flex-end;
   justify-content: space-between;
+  align-items: flex-end;
+  padding: 14px 16px 6px;
 }
 
-.top-month {
-  font-size: 18px;
-  font-weight: 600;
+.today-label {
+  font-size: 13px;
+  color: var(--accent-text);
 }
 
-.top-today {
-  font-size: 12px;
-  color: var(--text-sub);
-  margin-top: 2px;
+.month-label {
+  font-size: 22px;
+  font-weight: 700;
+  color: #111827;
 }
 
-.fab-mini {
-  width: 34px;
-  height: 34px;
-  border-radius: 17px;
+.icon-btn {
   border: none;
   background: var(--accent);
   color: #fff;
-  font-size: 22px;
-  display: flex;
+  width: 32px;
+  height: 32px;
+  border-radius: 14px;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  box-shadow: var(--shadow-soft);
+  font-size: 20px;
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35);
 }
 
-/* メイン */
-
-.main {
+/* メイン領域 */
+main {
   flex: 1;
+  padding: 0 10px 4px;
   display: flex;
   flex-direction: column;
-  padding: 0 8px 8px;
+  gap: 6px;
 }
 
-/* 画面切替 */
-
+/* タブごとの画面 */
 .screen {
   display: none;
-  height: 100%;
+  flex-direction: column;
+  gap: 6px;
 }
 
 .screen.active {
-  display: block;
+  display: flex;
 }
 
-/* カレンダー */
+/* --- カレンダー画面 --- */
+.calendar-card {
+  background: var(--bg-soft);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-soft);
+  padding: 10px 10px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
 
-.cal-nav-row {
+/* 月切り替え行 */
+.cal-header {
   display: flex;
   align-items: center;
-  gap: 4px;
-  padding: 4px 4px 2px;
+  gap: 8px;
+  padding: 0 2px;
 }
 
 .cal-nav-btn {
-  width: 28px;
-  height: 28px;
-  border-radius: 999px;
   border: none;
-  background: var(--bg-card-soft);
-  color: var(--text-main);
+  background: transparent;
+  padding: 4px;
   font-size: 18px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  color: var(--accent-text);
 }
 
 .cal-month-label {
-  flex: 1;
-  text-align: center;
   font-weight: 600;
-  font-size: 16px;
+  font-size: 15px;
+  color: #111827;
 }
 
-.cal-today-btn {
-  padding: 4px 10px;
+.cal-today-shortcut {
+  margin-left: auto;
+  padding: 4px 8px;
+  font-size: 11px;
   border-radius: 999px;
-  border: none;
-  font-size: 12px;
-  background: var(--accent-soft);
-  color: #fff;
+  border: 1px solid var(--border-soft);
+  color: var(--accent-text);
+  background: #f9fbff;
 }
 
 /* 曜日行 */
-
 .cal-weekdays {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  font-size: 11px;
-  color: var(--text-sub);
-  margin: 2px 2px 0;
+  font-size: 10px;
+  color: var(--text-weak);
 }
 
 .cal-weekdays div {
   text-align: center;
 }
 
-.cal-weekdays .sun {
-  color: #ff6b81;
-}
-
-.cal-weekdays .sat {
-  color: #4da3ff;
-}
-
-/* カレンダーグリッド */
-
+/* 日付マス */
 .cal-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  grid-auto-rows: minmax(44px, 1fr);
-  gap: 1px; /* ほぼ隙間なしに見える程度 */
-  margin: 2px 0 4px;
-  background-color: #000;
-  border-radius: 10px;
+  grid-auto-rows: minmax(40px, 1fr);
+  border-radius: 16px;
   overflow: hidden;
+  background: #f3f4fb;
 }
 
-/* 日セル */
-
-.day-cell {
-  background-color: var(--bg-card);
+.cal-day {
+  position: relative;
   padding: 2px 2px 1px;
+  border: 0.5px solid #e2e5f2;
+  background: #ffffff;
   display: flex;
   flex-direction: column;
-  justify-content: flex-start;
-  position: relative;
-  overflow: hidden;
 }
 
-.day-cell.other-month {
-  background-color: #090b10;
-  color: #6d7486;
-}
-
-.day-number {
+.cal-day-num {
   font-size: 11px;
-  font-weight: 500;
+  font-weight: 600;
 }
 
-.day-number.today {
-  color: var(--accent);
+.cal-day.today {
+  background: var(--today);
 }
 
-.day-title {
-  margin-top: 1px;
-  font-size: 8px;
-  line-height: 1.2;
-  color: #ffd166; /* イベントっぽく視覚化 */
-  white-space: nowrap;
-  text-overflow: ellipsis;
-  overflow: hidden;
+/* 今日の概要カード */
+.today-summary {
+  margin-top: 4px;
+  padding: 6px 8px;
+  border-radius: var(--radius-md);
+  background: #ffffffcc;
+  border: 1px solid var(--border-soft);
 }
 
-/* 選択枠 */
-
-.day-cell.selected {
-  outline: 1px solid var(--accent);
+.today-summary-label {
+  font-size: 10px;
+  color: var(--text-weak);
 }
 
-/* 今日の概要 */
-
-.day-summary {
-  margin: 6px 4px;
-  padding: 8px 10px;
-  background: var(--bg-card-soft);
-  border-radius: var(--radius-card);
-  box-shadow: var(--shadow-soft);
-}
-
-.day-summary-date {
-  font-size: 11px;
-  color: var(--accent);
-  margin-bottom: 2px;
-}
-
-.day-summary-title {
+.today-summary-title {
   font-size: 13px;
+  font-weight: 600;
+  color: var(--accent-text);
 }
 
-/* 日記画面 */
+/* --- 日記画面 --- */
+.editor-card {
+  background: var(--bg-soft);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-soft);
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
 
-.entry-header {
+textarea {
+  min-height: 120px;
+  resize: vertical;
+  border-radius: 8px;
+  border: 1px solid var(--border-soft);
+  padding: 8px;
+}
+
+/* --- 下ナビ --- */
+.bottom-nav {
+  position: sticky;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: var(--nav-height);
+  background: rgba(255, 255, 255, 0.98);
+  backdrop-filter: blur(14px);
+  box-shadow: 0 -4px 18px rgba(15, 23, 42, 0.10);
   display: flex;
   align-items: center;
-  padding: 4px 2px 2px;
+  justify-content: space-around;
+  z-index: 20;
 }
 
-.back-btn {
-  border: none;
-  background: none;
-  color: var(--accent);
-  font-size: 13px;
-}
-
-.entry-date-label {
-  margin-left: 8px;
-  font-size: 13px;
-  color: var(--text-sub);
-}
-
-.entry-card {
-  margin: 4px 2px 60px;
-  padding: 10px;
-  background: var(--bg-card-soft);
-  border-radius: var(--radius-card);
-  box-shadow: var(--shadow-soft);
-}
-
-.field-row {
+.nav-btn {
+  flex: 1;
   display: flex;
   flex-direction: column;
-  margin-bottom: 8px;
-}
-
-.field-row label {
-  font-size: 11px;
-  color: var(--text-sub);
-  margin-bottom: 2px;
-}
-
-.field-row input,
-.field-row textarea {
-  width: 100%;
-  padding: 6px 8px;
-  border-radius: 8px;
-  border: 1px solid #2b3240;
-  background: #0d1017;
-  color: var(--text-main);
-  font-size: 13px;
-}
-
-.field-row textarea {
-  resize: vertical;
-}
-
-/* 食事行 */
-
-.meal-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 6px;
-  margin-bottom: 6px;
-}
-
-.meal-row label {
+  align-items: center;
+  color: var(--text-weak);
   font-size: 10px;
 }
 
-/* ボタン */
-
-.entry-actions {
-  display: flex;
-  align-items: center;
-  margin-top: 10px;
-}
-
-.spacer {
-  flex: 1;
-}
-
-.btn {
-  padding: 6px 14px;
-  border-radius: 999px;
-  border: none;
-  font-size: 12px;
-}
-
-.btn.primary {
-  background: var(--accent);
-  color: #fff;
-}
-
-.btn.ghost {
-  background: transparent;
-  color: var(--danger);
-}
-
-/* 下ナビ */
-
-.bottom-nav {
-  position: fixed;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  padding-bottom: max(env(safe-area-inset-bottom), 6px);
-  padding-top: 4px;
-  display: flex;
-  justify-content: space-around;
-  background: rgba(3, 4, 7, 0.96);
-  backdrop-filter: blur(20px);
-  box-shadow: 0 -6px 18px rgba(0, 0, 0, 0.7);
-}
-
-.tab-btn {
-  flex: 1;
-  border: none;
-  background: none;
-  color: var(--text-sub);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-  padding: 6px 0 2px;
-  font-size: 11px;
-}
-
-.tab-icon {
-  font-size: 22px; /* 押しやすい大きさ */
-}
-
-.tab-label {
-  line-height: 1;
-}
-
-.tab-btn.active {
+.nav-btn.active {
   color: var(--accent);
-}
-
-/* スクロール用 */
-
-textarea,
-input {
-  -webkit-appearance: none;
+  font-weight: 600;
 }
