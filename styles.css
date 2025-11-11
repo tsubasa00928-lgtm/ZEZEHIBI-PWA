@@ -1,306 +1,321 @@
-/* === ベーススタイル === */
+/* ベース */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
 :root {
-  --c-blue: #0072B2;   /* 仕事/面談 */
-  --c-green: #009E73;  /* プライベート */
-  --c-yellow: #F0E442; /* 調整注意 */
-  --c-red: #D55E00;    /* 重要/締切 */
-  --c-pink: #CC79A7;   /* その他 */
-  --c-gray: #8C8C8C;   /* 未分類 */
-  --bg: #0f1115;
-  --panel: #171a21;
-  --text: #dce2ec;
+  --bg: #020813;
+  --panel: #0d1623;
   --accent: #5b8def;
+  --accent-soft: rgba(91, 141, 239, 0.16);
+  --text: #e7edf7;
+  --muted: #8c93a5;
+  --danger: #ff5c7a;
+  --radius-xl: 26px;
+  --radius-md: 14px;
+  --shadow-soft: 0 14px 40px rgba(0, 0, 0, 0.55);
+  --font-sans: -apple-system, BlinkMacSystemFont, system-ui, -system-ui,
+    -apple-system, BlinkMacSystemFont, "SF Pro JP", "Helvetica Neue",
+    "Segoe UI", sans-serif;
 }
 
 html,
 body {
   margin: 0;
   padding: 0;
-  width: 100%;
-  max-width: 100%;
-  overflow-x: hidden;
-  font-family: "Inter", "Noto Sans JP", system-ui, sans-serif;
-  background: var(--bg);
+  height: 100%;
+}
+
+body {
+  font-family: var(--font-sans);
+  background: radial-gradient(circle at top, #0c1626 0, #020813 60%);
   color: var(--text);
-  -webkit-text-size-adjust: 100%;
+  -webkit-font-smoothing: antialiased;
 }
 
-/* === レイアウト === */
-.app-shell {
-  width: 100%;
-  max-width: 100%;
-  margin: 0;
-  padding: 0;
-}
+/* 全体レイアウト：上ヘッダー + 中身 + 下タブ */
 
-header,
-main,
-.head,
-.panel,
-.grid,
-.calendar,
-.c-wrap,
-.c-week,
-.c-month {
-  width: 100%;
-  max-width: 100%;
-  box-sizing: border-box;
-}
-
-/* === ヘッダー === */
-header {
-  background: var(--panel);
-  color: var(--text);
-  padding: 8px 10px;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.4);
-  position: sticky;
-  top: 0;
-  z-index: 10;
-}
-
-.head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 6px;
-  flex-wrap: wrap;
-}
-
-.brand {
-  font-size: 18px;
-  font-weight: 700;
-  letter-spacing: 0.5px;
-}
-
-/* === 設定ボタン === */
-.icon-btn {
-  border: none;
-  background: transparent;
-  color: #c8d4e6;
-  font-size: 20px;
-  cursor: pointer;
-  padding: 4px 6px;
-  margin-left: 6px;
-}
-
-.icon-btn:hover {
-  color: #ffffff;
-}
-
-/* === タブナビ === */
-.tabs {
-  display: flex;
-  gap: 6px;
-}
-
-.tabs button {
-  background: transparent;
-  border: none;
-  color: #9fb2ce;
-  padding: 6px 12px;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 15px;
-}
-
-.tabs button.active {
-  background: var(--accent);
-  color: #fff;
-}
-
-.tabs button:hover {
-  background: #2d3d5c;
-}
-
-/* === パネルとカード === */
-.panel {
-  background: var(--panel);
-  padding: 10px;
-  border-radius: 10px;
-  margin: 10px auto;
-}
-
-.card {
-  background: #1b1f27;
-  border-radius: 10px;
-  padding: 10px;
-  margin-top: 8px;
-}
-
-/* === テキスト・入力 === */
-input, textarea, select, button {
-  font-family: inherit;
-  font-size: 15px;
-  color: var(--text);
-  background: #1e232b;
-  border: 1px solid #2d3847;
-  border-radius: 6px;
-  padding: 6px 8px;
-  width: 100%;
-  box-sizing: border-box;
-}
-
-input:focus, textarea:focus, select:focus {
-  outline: 1px solid var(--accent);
-  background: #252a33;
-}
-
-textarea {
-  min-height: 120px;
-  resize: vertical;
-}
-
-/* === ボタン === */
-button.primary {
-  background: var(--accent);
-  border: none;
-  color: white;
-  padding: 6px 12px;
-  border-radius: 8px;
-  cursor: pointer;
-}
-
-button.primary:hover {
-  background: #729dff;
-}
-
-button.danger {
-  background: #b83a3a;
-  border: none;
-  color: white;
-  padding: 6px 12px;
-  border-radius: 8px;
-  cursor: pointer;
-}
-
-button.danger:hover {
-  background: #d35656;
-}
-
-/* === 小要素 === */
-.badge {
-  background: var(--accent);
-  color: #fff;
-  padding: 2px 6px;
-  border-radius: 6px;
-  font-size: 12px;
-}
-
-.small {
-  font-size: 13px;
-  opacity: 0.85;
-}
-
-/* === グリッド === */
-.grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-}
-
-/* === カレンダー === */
-.calendar {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 2px;
-  margin-top: 4px;
-}
-
-.wd {
-  text-align: center;
-  padding: 4px 0;
-  font-weight: 600;
-}
-
-.sun {
-  color: #ff8080;
-}
-.sat {
-  color: #80aaff;
-}
-
-/* === スケジュール調整UI === */
-.c-toolbar {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 6px;
-  margin: 6px 0;
-}
-
-.c-btn {
-  background: #2e3b4f;
-  color: #dbe6fa;
-  border: none;
-  padding: 6px 10px;
-  border-radius: 8px;
-  cursor: pointer;
-}
-
-.c-btn.primary {
-  background: var(--accent);
-  color: white;
-}
-
-.c-btn.c-danger {
-  background: #b83a3a;
-}
-
-.c-btn:hover {
-  opacity: 0.85;
-}
-
-/* === モーダル === */
-dialog {
-  border: none;
-  border-radius: 10px;
-  padding: 0;
-  background: rgba(0,0,0,0.6);
-}
-
-.modal {
-  background: var(--panel);
-  border-radius: 10px;
-  padding: 16px;
-  color: var(--text);
-  max-width: 420px;
-  margin: auto;
-}
-
-/* === リスト === */
-.list {
+.app {
+  min-height: 100vh;
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 10px 10px 64px; /* 下タブ分 */
   display: flex;
   flex-direction: column;
   gap: 8px;
-  padding: 4px 0;
 }
 
-/* === 各セクション === */
+.app-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 10px 2px;
+}
+
+.app-title-main {
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+}
+
+.app-title-sub {
+  font-size: 10px;
+  color: var(--muted);
+}
+
+.app-header-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.icon-gear {
+  width: 20px;
+  height: 20px;
+  border-radius: 999px;
+  border: 1px solid rgba(231, 237, 247, 0.4);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+}
+
+/* 画面（タブ） */
+
 .screen {
   display: none;
 }
 
-.screen.show {
+.screen.active {
   display: block;
 }
 
-/* === その他調整 === */
-hr {
-  border: none;
-  border-top: 1px solid #2a3242;
-  margin: 10px 0;
+/* カレンダー画面（ホーム） */
+
+.panel {
+  background: radial-gradient(circle at top left, #121d33 0, #020813 60%);
+  border-radius: var(--radius-xl);
+  padding: 8px 10px 10px;
+  box-shadow: var(--shadow-soft);
 }
 
-a {
+.month-header {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 4px;
+}
+
+.month-header strong {
+  font-size: 20px;
+}
+
+.month-nav-btn {
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  font-size: 18px;
+  padding: 0 6px;
+}
+
+/* 曜日行 */
+
+.weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  font-size: 10px;
+  margin-bottom: 2px;
+  color: var(--muted);
+}
+
+/* 日付マス：できるだけ大きく・予定タイトルを表示 */
+
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  grid-auto-rows: minmax(56px, 1fr);
+  gap: 2px;
+}
+
+.day-cell {
+  position: relative;
+  padding: 3px 3px 2px;
+  border-radius: 12px;
+  background: rgba(10, 17, 30, 0.96);
+  border: 1px solid transparent;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.day-cell:hover {
+  border-color: var(--accent-soft);
+}
+
+.day-number {
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.day-number.today {
   color: var(--accent);
-  text-decoration: none;
 }
-a:hover {
-  text-decoration: underline;
+
+.day-number.other {
+  color: #4c5663;
 }
+
+.day-events {
+  margin-top: 0;
+  font-size: 8px;
+  line-height: 1.25;
+  color: var(--accent);
+  word-break: break-all;
+}
+
+/* 下タブバー */
+
+.tabbar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 54px;
+  padding: 6px 16px 10px;
+  background: radial-gradient(circle at top, #151b29 0, #020813 80%);
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.7);
+  z-index: 50;
+}
+
+.tab-btn {
+  flex: 1;
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  font-size: 9px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.tab-btn span.icon {
+  width: 16px;
+  height: 16px;
+  border-radius: 6px;
+  border: 1px solid rgba(140, 147, 165, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+}
+
+.tab-btn.active {
+  color: var(--accent);
+}
+
+.tab-btn.active span.icon {
+  border-color: var(--accent);
+}
+
+/* 記帳編集画面（別画面フル表示） */
+
+.editor-screen {
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(circle at top, #111a2c 0, #020813 80%);
+  padding: 14px 14px 64px;
+  display: none;
+  flex-direction: column;
+  gap: 8px;
+  z-index: 80;
+}
+
+.editor-screen.show {
+  display: flex;
+}
+
+.editor-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.editor-header button {
+  border: none;
+  background: transparent;
+  color: var(--accent);
+  font-size: 16px;
+}
+
+.editor-header-title {
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.editor-date {
+  font-size: 18px;
+  font-weight: 500;
+}
+
+.editor-input,
+.editor-textarea {
+  width: 100%;
+  background: rgba(4, 10, 20, 0.96);
+  border-radius: 14px;
+  border: 1px solid rgba(91, 141, 239, 0.25);
+  color: var(--text);
+  padding: 9px 10px;
+  font-size: 13px;
+}
+
+.editor-textarea {
+  min-height: 180px;
+  resize: vertical;
+}
+
+.editor-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.btn-primary {
+  flex: 1;
+  padding: 8px;
+  border-radius: 14px;
+  border: none;
+  background: linear-gradient(90deg, #5b8def, #9fa9ff);
+  color: #020813;
+  font-weight: 600;
+  font-size: 12px;
+}
+
+.btn-danger {
+  padding: 8px 10px;
+  border-radius: 14px;
+  border: none;
+  background: rgba(255, 92, 122, 0.16);
+  color: var(--danger);
+  font-size: 11px;
+}
+
+/* スマホ向け微調整 */
 
 @media (max-width: 480px) {
-  .grid {
-    grid-template-columns: 1fr;
+  .app {
+    padding: 6px 6px 60px;
+  }
+
+  .calendar-grid {
+    grid-auto-rows: minmax(52px, 1fr);
   }
 }
