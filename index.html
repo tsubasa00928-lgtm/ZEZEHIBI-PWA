@@ -2,145 +2,83 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>是々日々</title>
-
-  <!-- PWA -->
   <link rel="manifest" href="manifest.webmanifest" />
-  <link rel="apple-touch-icon" href="icon-192.png" />
-
-  <!-- Styles -->
   <link rel="stylesheet" href="styles.css" />
-
-  <!-- App Logic -->
   <script defer src="app.js"></script>
 </head>
+
 <body>
+  <div class="app-shell">
 
-<div class="app-root">
-
-  <!-- ヘッダー（シンプル） -->
-  <header class="top-bar">
-    <div class="top-left">
-      <div id="headerMonth" class="top-month"></div>
-      <div id="headerToday" class="top-today"></div>
-    </div>
-    <div class="top-right">
-      <button id="newEntryBtn" class="fab-mini">＋</button>
-    </div>
-  </header>
-
-  <main class="main">
-
-    <!-- 📅 カレンダー画面 -->
-    <section id="screen-calendar" class="screen active">
-
-      <!-- 月切替バー -->
-      <div class="cal-nav-row">
-        <button id="prevMonth" class="cal-nav-btn">‹</button>
-        <div id="calMonthLabel" class="cal-month-label">2025年11月</div>
-        <button id="nextMonth" class="cal-nav-btn">›</button>
-        <button id="goToday" class="cal-today-btn">今日</button>
+    <!-- 上部バー -->
+    <header class="top-bar">
+      <div class="top-left">
+        <div id="todayLabel" class="today-label"></div>
+        <div id="monthLabel" class="month-label"></div>
       </div>
-
-      <!-- 曜日 -->
-      <div class="cal-weekdays">
-        <div class="sun">日</div>
-        <div>月</div>
-        <div>火</div>
-        <div>水</div>
-        <div>木</div>
-        <div>金</div>
-        <div class="sat">土</div>
+      <div class="top-right">
+        <button id="newEntryBtn" class="icon-btn">＋</button>
       </div>
+    </header>
 
-      <!-- カレンダー本体 -->
-      <div id="calendarGrid" class="cal-grid">
-        <!-- app.js で日付セルを生成（ .day-cell ）-->
-      </div>
+    <!-- メイン領域 -->
+    <main>
 
-      <!-- 選択日の概要 -->
-      <div class="day-summary">
-        <div id="summaryDate" class="day-summary-date"></div>
-        <div id="summaryTitle" class="day-summary-title">まだ記録がありません</div>
-      </div>
+      <!-- 📅 カレンダー画面 -->
+      <section id="calendarScreen" class="screen active">
+        <div class="calendar-card">
+          <div class="cal-header">
+            <button id="prevMonth" class="cal-nav-btn">‹</button>
+            <div id="calMonthLabel" class="cal-month-label">2025年11月</div>
+            <button id="nextMonth" class="cal-nav-btn">›</button>
+            <button id="goToday" class="cal-today-shortcut">今日</button>
+          </div>
 
-    </section>
+          <div class="cal-weekdays">
+            <div>日</div><div>月</div><div>火</div><div>水</div>
+            <div>木</div><div>金</div><div>土</div>
+          </div>
 
-    <!-- 📝 日記入力画面（別画面） -->
-    <section id="screen-entry" class="screen">
-
-      <div class="entry-header">
-        <button id="backToCalendar" class="back-btn">‹ カレンダー</button>
-        <div id="entryDateLabel" class="entry-date-label"></div>
-      </div>
-
-      <div class="entry-card">
-
-        <!-- 起床時間 -->
-        <div class="field-row">
-          <label for="wakeTime">起床</label>
-          <input id="wakeTime" type="time">
+          <div id="calendarGrid" class="cal-grid"></div>
         </div>
 
-        <!-- 食事 -->
-        <div class="meal-row">
-          <div>
-            <label for="breakfast">朝食</label>
-            <input id="breakfast" type="text" placeholder="例：トースト、コーヒー">
+        <div class="today-summary" id="todaySummary">
+          <div class="today-summary-label">今日の記録</div>
+          <div class="today-summary-title" id="summaryTitle">まだ記録がありません</div>
+        </div>
+      </section>
+
+      <!-- 📖 日記入力画面 -->
+      <section id="entryScreen" class="screen">
+        <div class="editor-card">
+          <div class="editor-row">
+            <span id="entryDate" class="badge-date"></span>
           </div>
-          <div>
-            <label for="lunch">昼食</label>
-            <input id="lunch" type="text" placeholder="例：カレー、サラダ">
+
+          <textarea id="entryText" placeholder="今日の出来事や気づきを書く..."></textarea>
+
+          <div class="editor-row">
+            <button id="saveEntryBtn" class="icon-btn">💾</button>
+            <button id="cancelEntryBtn" class="icon-btn">←</button>
           </div>
         </div>
-        <div class="meal-row">
-          <div>
-            <label for="dinner">夕食</label>
-            <input id="dinner" type="text" placeholder="例：焼き魚、味噌汁">
-          </div>
-          <div>
-            <label for="snack">間食</label>
-            <input id="snack" type="text" placeholder="例：クッキー、紅茶">
-          </div>
-        </div>
+      </section>
 
-        <!-- タイトル＋本文 -->
-        <div class="field-row">
-          <label for="entryTitle">タイトル</label>
-          <input id="entryTitle" type="text" placeholder="一言で今日をまとめる">
-        </div>
+    </main>
 
-        <div class="field-row">
-          <label for="entryBody">本文</label>
-          <textarea id="entryBody" rows="8" placeholder="出来事・気づき・感情などを自由に。"></textarea>
-        </div>
-
-        <!-- ボタン -->
-        <div class="entry-actions">
-          <button id="deleteEntryBtn" class="btn ghost">削除</button>
-          <div class="spacer"></div>
-          <button id="saveEntryBtn" class="btn primary">保存</button>
-        </div>
+    <!-- 下ナビ -->
+    <nav class="bottom-nav">
+      <div class="nav-btn active" data-target="calendarScreen">
+        <div class="nav-icon">📅</div>
+        <span>カレンダー</span>
       </div>
-
-    </section>
-
-  </main>
-
-  <!-- 下ナビ（大きめ） -->
-  <nav class="bottom-nav">
-    <button class="tab-btn active" data-target="screen-calendar">
-      <div class="tab-icon">📅</div>
-      <div class="tab-label">カレンダー</div>
-    </button>
-    <button class="tab-btn" data-target="screen-entry">
-      <div class="tab-icon">📝</div>
-      <div class="tab-label">日記</div>
-    </button>
-  </nav>
-
-</div>
-
+      <div class="nav-btn" data-target="entryScreen">
+        <div class="nav-icon">📝</div>
+        <span>日記</span>
+      </div>
+    </nav>
+  </div>
 </body>
 </html>
