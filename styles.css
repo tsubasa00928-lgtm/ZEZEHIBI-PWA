@@ -1,237 +1,385 @@
-:root {
-  --bg: #f5f6fa;
-  --bg-soft: #ffffff;
-  --accent: #2f70ff;
-  --accent-soft: #dbe6ff;
-  --accent-text: #174099;
-  --text-main: #222;
-  --text-weak: #777;
-  --border-soft: #e0e4ee;
-  --today: #ffeb99;
-  --radius-xl: 26px;
-  --radius-md: 14px;
-  --shadow-soft: 0 8px 24px rgba(15, 23, 42, 0.10);
-  --nav-height: 80px;
-  --font-sans: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", -system-ui, sans-serif;
+/* リセット & 共通 */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
 }
 
 body {
-  font-family: var(--font-sans);
-  background: radial-gradient(circle at top, #eef3ff 0, #f5f6fa 40%, #eef2ff 100%);
-  color: var(--text-main);
   margin: 0;
+  padding: 0;
+  font-family: -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  background: #f3f5fb;
+  color: #222;
 }
 
-/* レイアウト全体 */
-.app-shell {
-  min-height: 100vh;
-  max-width: 480px;
+.app {
+  max-width: 520px;
   margin: 0 auto;
-  display: flex;
-  flex-direction: column;
+  min-height: 100vh;
+  padding-bottom: 80px; /* 下タブの高さ分 */
 }
 
-/* 上部バー */
-.top-bar {
+/* ヘッダー（シンプル） */
+
+.app-header {
+  padding: 10px 14px 4px;
   display: flex;
   justify-content: space-between;
-  align-items: flex-end;
-  padding: 14px 16px 6px;
+  align-items: center;
 }
 
-.today-label {
-  font-size: 13px;
-  color: var(--accent-text);
+.app-header-left {
+  height: 24px;
 }
 
-.month-label {
-  font-size: 22px;
-  font-weight: 700;
+.today-badge {
+  font-size: 11px;
+  color: #6b7280;
+}
+
+.icon-gear {
+  border: none;
+  background: none;
+  color: #6b7280;
+  font-size: 20px;
+  padding: 4px 6px;
+  cursor: pointer;
+}
+
+.icon-gear:active {
+  transform: scale(0.94);
+}
+
+/* パネル */
+
+.panel {
+  margin: 0 10px 10px;
+  padding: 10px;
+  border-radius: 18px;
+  background: #ffffff;
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.08);
+}
+
+.panel-calendar {
+  /* カレンダー用：高さを目一杯使ってマスを大きく */
+  min-height: calc(100vh - 150px);
+  display: flex;
+  flex-direction: column;
+}
+
+.panel-title {
+  margin: 0 0 6px;
+  font-size: 15px;
+}
+
+/* 月ヘッダー */
+
+.month-header {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 4px;
+}
+
+#labelMonth {
+  font-size: 18px;
+  font-weight: 600;
   color: #111827;
 }
 
-.icon-btn {
+.month-nav-btn {
   border: none;
-  background: var(--accent);
-  color: #fff;
-  width: 32px;
-  height: 32px;
-  border-radius: 14px;
-  display: inline-flex;
+  background: #eef2ff;
+  color: #4b5563;
+  border-radius: 999px;
+  width: 26px;
+  height: 26px;
+  display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 20px;
-  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35);
+  cursor: pointer;
+  font-size: 16px;
 }
 
-/* メイン領域 */
-main {
-  flex: 1;
-  padding: 0 10px 4px;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
+.month-nav-btn:active {
+  transform: scale(0.92);
 }
 
-/* タブごとの画面 */
-.screen {
-  display: none;
-  flex-direction: column;
-  gap: 6px;
-}
+/* 曜日 */
 
-.screen.active {
-  display: flex;
-}
-
-/* --- カレンダー画面 --- */
-.calendar-card {
-  background: var(--bg-soft);
-  border-radius: var(--radius-xl);
-  box-shadow: var(--shadow-soft);
-  padding: 10px 10px 8px;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-/* 月切り替え行 */
-.cal-header {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 0 2px;
-}
-
-.cal-nav-btn {
-  border: none;
-  background: transparent;
-  padding: 4px;
-  font-size: 18px;
-  color: var(--accent-text);
-}
-
-.cal-month-label {
-  font-weight: 600;
-  font-size: 15px;
-  color: #111827;
-}
-
-.cal-today-shortcut {
-  margin-left: auto;
-  padding: 4px 8px;
-  font-size: 11px;
-  border-radius: 999px;
-  border: 1px solid var(--border-soft);
-  color: var(--accent-text);
-  background: #f9fbff;
-}
-
-/* 曜日行 */
-.cal-weekdays {
+.weekdays {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
   font-size: 10px;
-  color: var(--text-weak);
-}
-
-.cal-weekdays div {
+  color: #9ca3af;
+  margin-bottom: 2px;
   text-align: center;
 }
 
-/* 日付マス */
-.cal-grid {
+/* カレンダーグリッド（マス最大化） */
+
+.calendar-grid {
+  flex: 1;
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  grid-auto-rows: minmax(40px, 1fr);
-  border-radius: 16px;
+  grid-auto-rows: 1fr;
+  gap: 2px;
+}
+
+.day-cell {
+  padding: 3px 3px 2px;
+  border-radius: 9px;
+  background: #f9fafb;
+  border: 1px solid transparent;
+  display: flex;
+  flex-direction: column;
+  cursor: pointer;
   overflow: hidden;
-  background: #f3f4fb;
 }
 
-.cal-day {
-  position: relative;
-  padding: 2px 2px 1px;
-  border: 0.5px solid #e2e5f2;
-  background: #ffffff;
-  display: flex;
-  flex-direction: column;
+.day-cell:hover {
+  border-color: #dbeafe;
+  background: #eff6ff;
 }
 
-.cal-day-num {
-  font-size: 11px;
-  font-weight: 600;
-}
-
-.cal-day.today {
-  background: var(--today);
-}
-
-/* 今日の概要カード */
-.today-summary {
-  margin-top: 4px;
-  padding: 6px 8px;
-  border-radius: var(--radius-md);
-  background: #ffffffcc;
-  border: 1px solid var(--border-soft);
-}
-
-.today-summary-label {
+.day-number {
   font-size: 10px;
-  color: var(--text-weak);
+  line-height: 1;
+  margin-bottom: 1px;
+  color: #4b5563;
 }
 
-.today-summary-title {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--accent-text);
+.day-number.other {
+  color: #cbd5f5;
 }
 
-/* --- 日記画面 --- */
-.editor-card {
-  background: var(--bg-soft);
-  border-radius: var(--radius-xl);
-  box-shadow: var(--shadow-soft);
-  padding: 10px;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
+.day-number.today {
+  color: #2563eb;
+  font-weight: 700;
 }
 
-textarea {
-  min-height: 120px;
-  resize: vertical;
-  border-radius: 8px;
-  border: 1px solid var(--border-soft);
-  padding: 8px;
+.day-events {
+  font-size: 8px;
+  line-height: 1.25;
+  color: #111827;
+  word-wrap: break-word;
 }
 
-/* --- 下ナビ --- */
-.bottom-nav {
-  position: sticky;
-  bottom: 0;
+/* 画面切り替え */
+
+.screen {
+  display: none;
+}
+
+.screen.active {
+  display: block;
+}
+
+/* 下タブバー（大きめタップ領域） */
+
+.tabbar {
+  position: fixed;
   left: 0;
   right: 0;
-  height: var(--nav-height);
-  background: rgba(255, 255, 255, 0.98);
-  backdrop-filter: blur(14px);
-  box-shadow: 0 -4px 18px rgba(15, 23, 42, 0.10);
+  bottom: 0;
+  padding: 6px 12px 10px;
   display: flex;
-  align-items: center;
-  justify-content: space-around;
-  z-index: 20;
+  justify-content: space-between;
+  gap: 6px;
+  background: rgba(243, 245, 251, 0.98);
+  backdrop-filter: blur(14px);
+  box-shadow: 0 -4px 14px rgba(148, 163, 253, 0.25);
+  z-index: 40;
 }
 
-.nav-btn {
+.tab-btn {
   flex: 1;
+  max-width: 100px;
+  border: none;
+  background: transparent;
+  padding: 4px 4px 2px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  color: var(--text-weak);
+  gap: 2px;
+  cursor: pointer;
+  color: #9ca3af;
   font-size: 10px;
 }
 
-.nav-btn.active {
-  color: var(--accent);
+.tab-btn .icon {
+  width: 26px;
+  height: 26px;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  background: #e5e7eb;
+}
+
+.tab-btn .label {
+  font-size: 9px;
+}
+
+.tab-btn.active {
+  color: #2563eb;
   font-weight: 600;
+}
+
+.tab-btn.active .icon {
+  background: #2563eb;
+  color: #ffffff;
+  box-shadow: 0 3px 8px rgba(37, 99, 235, 0.4);
+}
+
+.tab-btn:active {
+  transform: translateY(1px);
+}
+
+/* 記帳画面（明るめフルスクリーン） */
+
+.editor-screen {
+  position: fixed;
+  inset: 0;
+  max-width: 520px;
+  margin: 0 auto;
+  background: #f3f5fb;
+  transform: translateY(100%);
+  transition: transform 0.22s ease-out;
+  z-index: 50;
+  padding: 10px 12px 90px;
+  box-sizing: border-box;
+  box-shadow: 0 -4px 16px rgba(148, 163, 253, 0.4);
+  border-radius: 18px 18px 0 0;
+}
+
+.editor-screen.show {
+  transform: translateY(0);
+}
+
+.editor-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+#btnEditorBack {
+  border: none;
+  background: #e5e7eb;
+  color: #374151;
+  width: 26px;
+  height: 26px;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.editor-header-title {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.editor-date {
+  font-size: 11px;
+  color: #111827;
+}
+
+/* 起床・食事ブロック */
+
+.meal-block {
+  display: grid;
+  grid-template-columns: 1.2fr 1.6fr 1.6fr 1.6fr;
+  gap: 4px;
+  margin-bottom: 6px;
+  font-size: 9px;
+  color: #6b7280;
+}
+
+.meal-block label {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.meal-block input {
+  padding: 4px 6px;
+  border-radius: 9px;
+  border: 1px solid #e5e7eb;
+  background: #ffffff;
+  font-size: 10px;
+  color: #111827;
+}
+
+/* エディタ入力 */
+
+.editor-input {
+  width: 100%;
+  padding: 6px 8px;
+  margin-bottom: 4px;
+  border-radius: 10px;
+  border: 1px solid #e5e7eb;
+  background: #ffffff;
+  font-size: 11px;
+  color: #111827;
+}
+
+.editor-textarea {
+  width: 100%;
+  padding: 6px 8px;
+  border-radius: 10px;
+  border: 1px solid #e5e7eb;
+  background: #ffffff;
+  font-size: 11px;
+  color: #111827;
+  resize: vertical;
+  min-height: 120px;
+}
+
+/* 記帳ボタン */
+
+.editor-actions {
+  margin-top: 8px;
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.btn-primary,
+.btn-danger {
+  padding: 7px 14px;
+  border-radius: 999px;
+  border: none;
+  font-size: 10px;
+  cursor: pointer;
+}
+
+.btn-primary {
+  flex: 1;
+  background: linear-gradient(to right, #60a5fa, #2563eb);
+  color: #ffffff;
+  box-shadow: 0 4px 10px rgba(37, 99, 235, 0.3);
+}
+
+.btn-danger {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+/* その他テキスト */
+
+.small-text {
+  font-size: 10px;
+  color: #6b7280;
+}
+
+.list {
+  font-size: 11px;
+  color: #374151;
 }
