@@ -1,12 +1,12 @@
 // 是々日々 app.js
 
-// -------------------- 永続化まわり --------------------
+// -------------------- 永続化 --------------------
 
 const STORAGE_KEY = "zezehibi-db-v1";
 
 let db = {
-  entries: [], // { date: "YYYY-MM-DD", title: "", body: "" }
-  // 今後 schedules など増やしたい場合はここに
+  // entry: { date, title, body, wake, breakfast, lunch, dinner }
+  entries: [],
   updatedAt: null
 };
 
@@ -19,8 +19,8 @@ function loadDB() {
       return;
     }
     const parsed = JSON.parse(raw);
-    // 将来拡張に備えてマージ
     db = Object.assign({ entries: [], updatedAt: null }, parsed);
+    if (!Array.isArray(db.entries)) db.entries = [];
   } catch (e) {
     console.error("loadDB failed", e);
   }
@@ -40,25 +40,18 @@ function saveDB() {
 function toISO(date) {
   return date.toISOString().slice(0, 10);
 }
-
-function fromYMD(y, m, d) {
-  return new Date(y, m, d);
-}
-
 function formatJP(date) {
   const w = ["日", "月", "火", "水", "木", "金", "土"][date.getDay()];
   return `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日 (${w})`;
 }
 
-// -------------------- カレンダー状態 --------------------
+// -------------------- カレンダー --------------------
 
 let current = new Date();
 
 function setMonthLabel() {
-  const label = document.getElementById("labelMonth");
-  label.textContent = `${current.getFullYear()}年 ${
-    current.getMonth() + 1
-  }月`;
+  document.getElementById("labelMonth").textContent =
+    `${current.getFullYear()}年 ${current.getMonth() + 1}月`;
 }
 
 function buildCalendar() {
@@ -67,55 +60,48 @@ function buildCalendar() {
 
   const year = current.getFullYear();
   const month = current.getMonth();
-
-  // 1日
   const first = new Date(year, month, 1);
   const startDay = first.getDay();
-
-  // 当月の日数
   const nextMonthFirst = new Date(year, month + 1, 1);
   const lastDate = new Date(nextMonthFirst - 1).getDate();
-
-  // 表示開始日（前月分を含める）
   const startDate = new Date(year, month, 1 - startDay);
-
   const todayISO = toISO(new Date());
 
-  // 6週 × 7日 = 42マス
   for (let i = 0; i < 42; i++) {
     const d = new Date(startDate);
     d.setDate(startDate.getDate() + i);
-
     const iso = toISO(d);
-    const isCurrentMonth = d.getMonth() === month;
+    const inMonth = d.getMonth() === month;
 
     const cell = document.createElement("div");
     cell.className = "day-cell";
 
     const num = document.createElement("div");
-    num.classList.add("day-number");
-    if (!isCurrentMonth) num.classList.add("other");
+    num.className = "day-number";
+    if (!inMonth) num.classList.add("other");
     if (iso === todayISO) num.classList.add("today");
     num.textContent = d.getDate();
     cell.appendChild(num);
 
-    // この日のエントリ
-    const entries = db.entries
-      .filter((e) => e.date === iso)
-      .slice(0, 3); // 最大3件表示
-
-    if (entries.length) {
+    // エントリ
+    const entry = db.entries.find((e) => e.date === iso);
+    if (entry) {
       const ev = document.createElement("div");
       ev.className = "day-events";
-      ev.textContent = entries
-        .map((e) => (e.title || "記録あり"))
-        .join(" / ");
+
+      // 表示優先：タイトル > 食事 > 起床
+      const labels = [];
+      if (entry.title) labels.push(entry.title);
+      const meals = [entry.breakfast, entry.lunch, entry.dinner].filter(Boolean);
+      if (meals.length) labels.push(meals.join(" / "));
+      if (!labels.length && (entry.body || "").trim()) {
+        labels.push("記録あり");
+      }
+      ev.textContent = labels.join(" ｜ ").slice(0, 18);
       cell.appendChild(ev);
     }
 
-    // クリックで記帳画面
     cell.addEventListener("click", () => openEditor(iso));
-
     grid.appendChild(cell);
   }
 }
@@ -125,109 +111,114 @@ function buildCalendar() {
 function openEditor(dateIso) {
   const screen = document.getElementById("editorScreen");
   const date = new Date(dateIso);
-
   document.getElementById("editorDate").textContent = formatJP(date);
 
-  const existing =
-    db.entries.find((e) => e.date === dateIso) || null;
+  const e = db.entries.find((x) => x.date === dateIso) || {};
 
-  document.getElementById("editorTitle").value =
-    (existing && existing.title) || "";
-  document.getElementById("editorBody").value =
-    (existing && existing.body) || "";
+  document.getElementById("editorTitle").value = e.title || "";
+  document.getElementById("editorBody").value = e.body || "";
+  document.getElementById("editorWake").value = e.wake || "";
+  document.getElementById("editorBreakfast").value = e.breakfast || "";
+  document.getElementById("editorLunch").value = e.lunch || "";
+  document.getElementById("editorDinner").value = e.dinner || "";
 
   screen.dataset.date = dateIso;
   screen.classList.add("show");
 }
 
 function closeEditor() {
-  const screen = document.getElementById("editorScreen");
-  screen.classList.remove("show");
+  document.getElementById("editorScreen").classList.remove("show");
 }
 
 function setupEditorEvents() {
-  document
-    .getElementById("btnEditorBack")
-    .addEventListener("click", closeEditor);
+  document.getElementById("btnEditorBack").addEventListener("click", closeEditor);
 
-  document
-    .getElementById("btnSaveEntry")
-    .addEventListener("click", () => {
-      const screen = document.getElementById("editorScreen");
-      const date = screen.dataset.date;
-      if (!date) return;
+  document.getElementById("btnSaveEntry").addEventListener("click", () => {
+    const screen = document.getElementById("editorScreen");
+    const date = screen.dataset.date;
+    if (!date) return;
 
-      const title = document
-        .getElementById("editorTitle")
-        .value.trim();
-      const body = document
-        .getElementById("editorBody")
-        .value.trim();
+    const title = document.getElementById("editorTitle").value.trim();
+    const body = document.getElementById("editorBody").value.trim();
+    const wake = document.getElementById("editorWake").value;
+    const breakfast = document.getElementById("editorBreakfast").value.trim();
+    const lunch = document.getElementById("editorLunch").value.trim();
+    const dinner = document.getElementById("editorDinner").value.trim();
 
-      let entry = db.entries.find((e) => e.date === date);
-      if (!entry) {
-        entry = { date };
-        db.entries.push(entry);
-      }
-      entry.title = title;
-      entry.body = body;
+    let entry = db.entries.find((e) => e.date === date);
+    if (!entry) {
+      entry = { date };
+      db.entries.push(entry);
+    }
 
-      saveDB();
-      buildCalendar();
-      closeEditor();
-    });
+    entry.title = title;
+    entry.body = body;
+    entry.wake = wake;
+    entry.breakfast = breakfast;
+    entry.lunch = lunch;
+    entry.dinner = dinner;
 
-  document
-    .getElementById("btnDeleteEntry")
-    .addEventListener("click", () => {
-      const screen = document.getElementById("editorScreen");
-      const date = screen.dataset.date;
-      if (!date) return;
+    // 空エントリは削除
+    if (
+      !entry.title &&
+      !entry.body &&
+      !entry.wake &&
+      !entry.breakfast &&
+      !entry.lunch &&
+      !entry.dinner
+    ) {
+      db.entries = db.entries.filter((e) => e !== entry);
+    }
 
-      db.entries = db.entries.filter((e) => e.date !== date);
-      saveDB();
-      buildCalendar();
-      closeEditor();
-    });
+    saveDB();
+    buildCalendar();
+    closeEditor();
+  });
+
+  document.getElementById("btnDeleteEntry").addEventListener("click", () => {
+    const screen = document.getElementById("editorScreen");
+    const date = screen.dataset.date;
+    if (!date) return;
+
+    db.entries = db.entries.filter((e) => e.date !== date);
+    saveDB();
+    buildCalendar();
+    closeEditor();
+  });
 }
 
-// -------------------- タブ切り替え --------------------
+// -------------------- タブ --------------------
 
 function showScreen(id) {
-  document.querySelectorAll(".screen").forEach((sec) => {
-    sec.classList.toggle("active", sec.id === id);
+  document.querySelectorAll(".screen").forEach((s) => {
+    s.classList.toggle("active", s.id === id);
   });
 }
 
 function setupTabs() {
   const tabs = document.querySelectorAll(".tab-btn");
-
   tabs.forEach((btn) => {
     btn.addEventListener("click", () => {
       const target = btn.dataset.target;
       showScreen(target);
-
-      tabs.forEach((b) =>
-        b.classList.toggle("active", b === btn)
-      );
+      tabs.forEach((b) => b.classList.toggle("active", b === btn));
     });
   });
 
-  // ヘッダーの⚙から設定タブへショートカット
-  const gear = document.getElementById(
-    "btnSettingsShortcut"
-  );
+  const gear = document.getElementById("btnSettingsShortcut");
   if (gear) {
     gear.addEventListener("click", () => {
-      const settingsBtn = document.querySelector(
-        '.tab-btn[data-target="screen-settings"]'
-      );
-      if (settingsBtn) settingsBtn.click();
+      const t = document.querySelector('.tab-btn[data-target="screen-settings"]');
+      t && t.click();
     });
   }
 }
 
 // -------------------- 検索 --------------------
+
+function escapeHTML(str) {
+  return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
 
 function setupSearch() {
   const input = document.getElementById("searchInput");
@@ -241,14 +232,11 @@ function setupSearch() {
       return;
     }
     const lower = q.toLowerCase();
+
     const hits = db.entries.filter((e) => {
       return (
-        (e.title || "")
-          .toLowerCase()
-          .includes(lower) ||
-        (e.body || "")
-          .toLowerCase()
-          .includes(lower)
+        (e.title || "").toLowerCase().includes(lower) ||
+        (e.body || "").toLowerCase().includes(lower)
       );
     });
 
@@ -258,40 +246,26 @@ function setupSearch() {
     }
 
     box.innerHTML = hits
-      .sort((a, b) =>
-        a.date < b.date ? 1 : -1
-      )
+      .slice()
+      .sort((a, b) => (a.date < b.date ? 1 : -1))
       .map(
         (e) => `
         <div style="margin-bottom:6px">
           <div style="font-size:10px;color:#8c93a5">${e.date}</div>
-          <div style="font-size:12px">${escapeHTML(
-            e.title || "(無題)"
-          )}</div>
+          <div style="font-size:12px">${escapeHTML(e.title || "(無題)")}</div>
         </div>`
       )
       .join("");
   });
 }
 
-function escapeHTML(str) {
-  return str
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;");
-}
-
-// -------------------- 設定：インポート／エクスポート --------------------
+// -------------------- 設定（インポート／エクスポート） --------------------
 
 function setupSettings() {
-  const btnExport = document.getElementById(
-    "btnExportJSON"
-  );
+  const btnExport = document.getElementById("btnExportJSON");
   const out = document.getElementById("exportOutput");
   const fileInput = document.getElementById("importFile");
-  const btnImport = document.getElementById(
-    "btnImportJSON"
-  );
+  const btnImport = document.getElementById("btnImportJSON");
 
   if (btnExport && out) {
     btnExport.addEventListener("click", () => {
@@ -314,18 +288,13 @@ function setupSettings() {
           if (!imported || !Array.isArray(imported.entries)) {
             throw new Error("形式が不正です");
           }
-          db = Object.assign(
-            { entries: [] },
-            imported
-          );
+          db = Object.assign({ entries: [] }, imported);
           saveDB();
           buildCalendar();
           alert("インポートが完了しました。");
         } catch (err) {
           console.error(err);
-          alert(
-            "インポートに失敗しました。JSONの内容を確認してください。"
-          );
+          alert("インポートに失敗しました。JSONの内容を確認してください。");
         }
       };
       reader.readAsText(file, "utf-8");
@@ -333,7 +302,7 @@ function setupSettings() {
   }
 }
 
-// -------------------- 今日バッジ --------------------
+// -------------------- その他 --------------------
 
 function setTodayBadge() {
   const el = document.getElementById("todayBadge");
@@ -341,15 +310,11 @@ function setTodayBadge() {
   el.textContent = `${d.getMonth() + 1}/${d.getDate()} 今日`;
 }
 
-// -------------------- PWA: Service Worker 登録 --------------------
-
 function setupServiceWorker() {
   if ("serviceWorker" in navigator) {
     navigator.serviceWorker
       .register("./sw.js")
-      .catch((err) =>
-        console.log("SW registration failed", err)
-      );
+      .catch((err) => console.log("SW registration failed", err));
   }
 }
 
@@ -357,7 +322,6 @@ function setupServiceWorker() {
 
 function init() {
   loadDB();
-
   setTodayBadge();
   setMonthLabel();
   buildCalendar();
@@ -368,30 +332,17 @@ function init() {
   setupSettings();
   setupServiceWorker();
 
-  document
-    .getElementById("btnPrevMonth")
-    .addEventListener("click", () => {
-      current = new Date(
-        current.getFullYear(),
-        current.getMonth() - 1,
-        1
-      );
-      setMonthLabel();
-      buildCalendar();
-    });
+  document.getElementById("btnPrevMonth").addEventListener("click", () => {
+    current = new Date(current.getFullYear(), current.getMonth() - 1, 1);
+    setMonthLabel();
+    buildCalendar();
+  });
 
-  document
-    .getElementById("btnNextMonth")
-    .addEventListener("click", () => {
-      current = new Date(
-        current.getFullYear(),
-        current.getMonth() + 1,
-        1
-      );
-      setMonthLabel();
-      buildCalendar();
-    });
+  document.getElementById("btnNextMonth").addEventListener("click", () => {
+    current = new Date(current.getFullYear(), current.getMonth() + 1, 1);
+    setMonthLabel();
+    buildCalendar();
+  });
 }
 
-// defer なのでそのまま呼んでOK
 init();
