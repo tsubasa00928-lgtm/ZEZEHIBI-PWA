@@ -2,381 +2,200 @@
 <html lang="ja">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="theme-color" content="#5b8def" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-  <title>是々日々 — 日記 / 予定 / 検索 / スケジュール調整</title>
-<!-- PWA icon settings -->
-<link rel="manifest" href="manifest.webmanifest">
-<link rel="apple-touch-icon" href="apple-touch-icon.png">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="是々日々">
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1, viewport-fit=cover"
+  />
+  <meta name="theme-color" content="#020813" />
+  <title>是々日々 - 日記 / 予定 / 調整</title>
 
   <!-- PWA -->
   <link rel="manifest" href="manifest.webmanifest" />
-  <link rel="icon" sizes="192x192" href="icons/icon-192.png" />
-  <link rel="icon" sizes="512x512" href="icons/icon-512.png" />
-  <link rel="apple-touch-icon" href="icons/maskable-512.png" />
+  <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png" />
+  <link rel="apple-touch-icon" href="icon-512.png" />
 
   <!-- Styles -->
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <body>
-  <div class="app-shell">
-    <header> ... </header>
-    <main> ... </main>
-    <!-- 既存の dialog もこの中でOK -->
-    <dialog id="dlg"> ... </dialog>
-    <dialog id="cModal"> ... </dialog>
-    <dialog id="cSlotsModal"> ... </dialog>
-    <!-- ↓ここにあとで設定ダイアログ追加 -->
+  <div class="app">
+    <!-- ヘッダー -->
+    <header class="app-header">
+      <div>
+        <div class="app-title-main">是々日々</div>
+        <div class="app-title-sub">
+          日々を静かに整える、個人用カレンダー＆日記
+        </div>
+      </div>
+      <div class="app-header-right">
+        <div id="todayBadge" class="app-title-sub"></div>
+        <button id="btnSettingsShortcut" class="icon-gear">⚙</button>
+      </div>
+    </header>
+
+    <!-- タブごとの画面 -->
+
+    <!-- ① ホーム（日記カレンダー） -->
+    <main>
+      <section id="screen-home" class="screen active">
+        <div class="panel">
+          <div class="month-header">
+            <button
+              class="month-nav-btn"
+              id="btnPrevMonth"
+              type="button"
+            >‹</button>
+            <strong id="labelMonth"></strong>
+            <button
+              class="month-nav-btn"
+              id="btnNextMonth"
+              type="button"
+            >›</button>
+          </div>
+
+          <div class="weekdays">
+            <div>日</div><div>月</div><div>火</div><div>水</div>
+            <div>木</div><div>金</div><div>土</div>
+          </div>
+
+          <div id="calGrid" class="calendar-grid"></div>
+        </div>
+      </section>
+
+      <!-- ② 予定（簡易版。必要に応じて拡張してOK） -->
+      <section id="screen-schedule" class="screen">
+        <div class="panel">
+          <h3 style="margin:0 0 6px;font-size:15px">予定一覧</h3>
+          <div id="scheduleList" class="list small-text">
+            （ここに日記とは別の予定を表示できます）
+          </div>
+        </div>
+      </section>
+
+      <!-- ③ 検索 -->
+      <section id="screen-search" class="screen">
+        <div class="panel">
+          <h3 style="margin:0 0 6px;font-size:15px">検索</h3>
+          <input
+            id="searchInput"
+            type="text"
+            placeholder="キーワード（タイトル・本文）"
+            class="editor-input"
+            style="margin-bottom:8px"
+          />
+          <div id="searchResult" class="list small-text"></div>
+        </div>
+      </section>
+
+      <!-- ④ スケジュール調整（プレースホルダ） -->
+      <section id="screen-coord" class="screen">
+        <div class="panel">
+          <h3 style="margin:0 0 6px;font-size:15px">スケジュール調整</h3>
+          <p class="app-title-sub">
+            将来的に、帯カレンダーや共有候補リストをここに配置できます。
+          </p>
+        </div>
+      </section>
+
+      <!-- ⑤ 設定（インポート／エクスポート） -->
+      <section id="screen-settings" class="screen">
+        <div class="panel">
+          <h3 style="margin:0 0 6px;font-size:15px">設定</h3>
+
+          <div class="app-title-sub" style="margin-bottom:6px">
+            データのバックアップ & 移行
+          </div>
+
+          <button id="btnExportJSON" class="btn-primary" type="button">
+            データをエクスポート（JSONを表示）
+          </button>
+
+          <textarea
+            id="exportOutput"
+            class="editor-textarea"
+            placeholder="エクスポート結果（読み取り専用）"
+            style="margin-top:6px;min-height:120px"
+          ></textarea>
+
+          <div style="margin-top:10px" class="app-title-sub">
+            JSONファイルからインポート（※既存データに上書き）
+          </div>
+          <input
+            id="importFile"
+            type="file"
+            accept="application/json"
+            style="margin:4px 0 6px"
+          />
+          <button id="btnImportJSON" class="btn-danger" type="button">
+            インポートを実行
+          </button>
+
+          <p class="app-title-sub" style="margin-top:8px">
+            ※ブラウザ／PWAのローカルストレージに保存しており、<br />
+            アップデートしても基本的に消えません。
+          </p>
+        </div>
+      </section>
+    </main>
   </div>
 
-  <script defer src="app.js"></script>
-</body>
+  <!-- 下タブバー -->
+  <nav class="tabbar">
+    <button class="tab-btn active" data-target="screen-home" type="button">
+      <span class="icon">月</span>
+      日記
+    </button>
+    <button class="tab-btn" data-target="screen-schedule" type="button">
+      <span class="icon">📅</span>
+      予定
+    </button>
+    <button class="tab-btn" data-target="screen-search" type="button">
+      <span class="icon">🔍</span>
+      検索
+    </button>
+    <button class="tab-btn" data-target="screen-coord" type="button">
+      <span class="icon">⇔</span>
+      調整
+    </button>
+    <button class="tab-btn" data-target="screen-settings" type="button">
+      <span class="icon">⚙</span>
+      設定
+    </button>
+  </nav>
 
-  <noscript>このアプリを利用するにはJavaScriptを有効にしてください。</noscript>
-
-  <header>
-    <div class="head">
-      <div class="brand">📒 是々日々</div>
-      <nav class="tabs" role="tablist" aria-label="メインタブ">
-        <button id="tabDiary" class="active" aria-controls="screenDiary" aria-selected="true">日記</button>
-        <button id="tabSched" aria-controls="screenSched" aria-selected="false">予定</button>
-        <button id="tabSearch" aria-controls="screenSearch" aria-selected="false">検索</button>
-        <button id="tabCoord" aria-controls="screenCoord" aria-selected="false">スケジュール調整</button>
-      </nav>
-      <div class="small" id="todayBadge" aria-live="polite"></div>
+  <!-- 記帳用フルスクリーン画面 -->
+  <div id="editorScreen" class="editor-screen">
+    <div class="editor-header">
+      <button id="btnEditorBack" type="button">‹</button>
+      <div>
+        <div class="editor-header-title">是々日々 / 日記編集</div>
+        <div id="editorDate" class="editor-date"></div>
+      </div>
     </div>
-  </header>
 
-  <main>
-    <!-- ① 日記 -->
-    <section id="screenDiary" class="screen show" role="tabpanel" aria-labelledby="tabDiary">
-      <div class="panel grid grid-2">
-        <div>
-          <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
-            <button id="prevM" type="button" aria-label="前の月">◀</button>
-            <strong id="calTitle"></strong>
-            <button id="nextM" type="button" aria-label="次の月">▶</button>
-            <div style="flex:1"></div>
-            <label class="small" for="jumpMonth" style="display:none">月を選択</label>
-            <input id="jumpMonth" type="month" />
-          </div>
+    <input
+      id="editorTitle"
+      class="editor-input"
+      placeholder="タイトル"
+    />
 
-          <div class="calendar" aria-hidden="true">
-            <div class="wd sun">日</div><div class="wd">月</div><div class="wd">火</div>
-            <div class="wd">水</div><div class="wd">木</div><div class="wd">金</div><div class="wd sat">土</div>
-          </div>
-          <div id="calGrid" class="calendar" aria-label="日記カレンダー"></div>
+    <textarea
+      id="editorBody"
+      class="editor-textarea"
+      placeholder="今日のこと、気づき、メモなど"
+    ></textarea>
 
-          <div class="small" style="margin-top:6px">
-            選択日：<span class="badge" id="selISO"></span> <strong id="selJP"></strong>
-          </div>
-        </div>
-
-        <div>
-          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-            <strong>この日の日記</strong>
-            <div style="flex:1"></div>
-            <button id="newEntry" class="primary" type="button">新規作成</button>
-          </div>
-          <div id="dayList" class="list" style="margin-top:8px"></div>
-
-          <!-- 達成ログ（予定の達成のみを別表示） -->
-          <div class="card" id="autoActsBox" style="display:none; margin-top:8px; cursor:default">
-            <strong>✅ 達成ログ（予定）</strong>
-            <div id="autoActs" class="small" style="margin-top:6px; line-height:1.7"></div>
-          </div>
-
-          <hr/>
-          <div id="editor" style="display:none; margin-top:8px">
-            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-              <span id="editISO" class="badge">—</span><strong id="editJP">—</strong>
-              <div style="flex:1"></div>
-              <label class="small">日付 <input id="dateInput" type="date"></label>
-              <button id="saveBtn" class="primary" type="button">保存</button>
-              <button id="delBtn" class="danger" type="button">削除</button>
-              <small id="saveState" class="small" aria-live="polite">—</small>
-            </div>
-
-            <div class="meal-card" style="margin:8px 0 10px">
-              <div class="small" style="font-weight:700">起床・食事</div>
-              <div class="row"><label class="small">起床 ☀️ <input id="wake" type="time"/></label></div>
-              <div class="meal-row-inline">
-                <input id="breakfast" type="text" placeholder="朝食"/>
-                <input id="lunch" type="text" placeholder="昼食"/>
-                <input id="dinner" type="text" placeholder="夕食"/>
-              </div>
-            </div>
-
-            <input id="title" type="text" placeholder="タイトル"/>
-            <textarea id="body" placeholder="本文"></textarea>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ② 予定（月間＋日別） -->
-    <section id="screenSched" class="screen" role="tabpanel" aria-labelledby="tabSched" hidden>
-      <div class="panel grid grid-2">
-        <div>
-          <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
-            <button id="sPrevM" type="button" aria-label="前の月">◀</button>
-            <strong id="schedTitle"></strong>
-            <button id="sNextM" type="button" aria-label="次の月">▶</button>
-            <div style="flex:1"></div>
-            <span class="badge" id="schedMonthKPI" aria-live="polite"></span>
-          </div>
-
-          <div class="calendar" aria-hidden="true">
-            <div class="wd sun">日</div><div class="wd">月</div><div class="wd">火</div>
-            <div class="wd">水</div><div class="wd">木</div><div class="wd">金</div><div class="wd sat">土</div>
-          </div>
-          <div id="schedGrid" class="calendar" aria-label="予定カレンダー"></div>
-
-          <div class="small" style="margin-top:6px">
-            選択日：<span class="badge" id="schedISO"></span> <strong id="schedJP"></strong>
-          </div>
-
-          <div style="display:flex;gap:8px;align-items:center;margin-top:6px">
-            <button id="newSched" class="primary" type="button">新規予定</button>
-          </div>
-          <div id="schedList" class="list" style="margin-top:8px"></div>
-        </div>
-
-        <div>
-          <div style="display:flex;align-items:center;gap:8px">
-            <strong>今月の未消化</strong><div style="flex:1"></div>
-          </div>
-          <div id="monthPending" class="list" style="margin-top:8px;max-height:520px;overflow:auto"></div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ③ 検索 -->
-    <section id="screenSearch" class="screen" role="tabpanel" aria-labelledby="tabSearch" hidden>
-      <div class="panel">
-        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-          <strong>検索</strong>
-          <input id="q" type="text" placeholder="キーワード（タイトル・本文・食事・予定など）" style="flex:1" />
-        </div>
-
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:10px">
-          <div>
-            <div class="small" style="font-weight:700;margin-bottom:6px">日記</div>
-            <div id="searchDiary" class="list"></div>
-          </div>
-          <div>
-            <div class="small" style="font-weight:700;margin-bottom:6px">予定</div>
-            <div id="searchSched" class="list"></div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ④ スケジュール調整（帯カレンダー） -->
-    <section id="screenCoord" class="screen" role="tabpanel" aria-labelledby="tabCoord" hidden>
-      <div class="panel">
-        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:4px">
-          <strong style="font-size:16px">スケジュール調整（週／月の帯カレンダー）</strong>
-          <span class="badge" id="coordWeekLabel">—</span>
-        </div>
-
-        <div class="c-toolbar">
-          <button class="c-btn primary" id="cNewBtn" type="button">＋ 予定を追加</button>
-          <div class="c-viewtabs" role="tablist" aria-label="表示切替">
-            <button class="active" data-view="week" id="cTabWeek" aria-selected="true">週</button>
-            <button data-view="month" id="cTabMonth" aria-selected="false">月</button>
-          </div>
-          <input id="cQ" class="c-input" placeholder="検索（タイトル・相手・メモ）" aria-label="スケジュール検索">
-          <select id="cStatus" class="c-select" aria-label="ステータスで絞り込み">
-            <option value="">全ステータス</option>
-            <option value="確定">確定</option>
-            <option value="仮">仮</option>
-            <option value="待ち">返信待ち</option>
-            <option value="注意">調整注意</option>
-            <option value="保留">保留</option>
-            <option value="取消">取消</option>
-          </select>
-          <select id="cDur" class="c-select" aria-label="空き時間の長さ">
-            <option value="60">空き検索: 60分</option>
-            <option value="30">空き検索: 30分</option>
-            <option value="90">空き検索: 90分</option>
-            <option value="120">空き検索: 120分</option>
-          </select>
-          <button id="cFindSlots" class="c-btn" type="button">空き候補</button>
-        </div>
-
-        <div class="c-legend" aria-hidden="true">
-          <span><i class="dot" style="background:#0072B2"></i>仕事/面談</span>
-          <span><i class="dot" style="background:#009E73"></i>プライベート</span>
-          <span><i class="dot" style="background:#F0E442"></i>調整注意</span>
-          <span><i class="dot" style="background:#D55E00"></i>重要/締切</span>
-          <span><i class="dot" style="background:#CC79A7"></i>その他</span>
-          <span><i class="dot" style="background:#8C8C8C"></i>未分類</span>
-        </div>
-
-        <div class="c-wrap">
-          <!-- 週ビュー -->
-          <section class="c-week" id="cWeekView" aria-live="polite">
-            <div class="c-week-head" id="cWeekHead"></div>
-            <div class="c-week-grid" id="cWeekGrid"></div>
-          </section>
-
-          <!-- 月ビュー -->
-          <section class="c-month" id="cMonthView" style="display:none" aria-live="polite">
-            <div class="c-month-head" id="cMonthHead"></div>
-            <div class="c-month-grid" id="cMonthGrid"></div>
-          </section>
-        </div>
-      </div>
-    </section>
-  </main>
-
-  <!-- 予定モーダル（既存） -->
-  <dialog id="dlg">
-    <div class="modal">
-      <h3>予定</h3>
-      <div class="row"><label class="small">日付 <input id="mDate" type="date" required></label></div>
-      <div class="row" style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-        <label class="small">開始 <input id="mStart" type="time"></label>
-        <label class="small">終了 <input id="mEnd" type="time"></label>
-      </div>
-      <div class="row"><input id="mTitle" type="text" placeholder="タイトル（例：面談、バイト、ゼミ）"></div>
-      <div class="row"><textarea id="mNote" placeholder="メモ（場所・リンク・持ち物など）" style="min-height:120px"></textarea></div>
-      <div class="row" style="display:flex;align-items:center;gap:8px"><input id="mDone" type="checkbox"><label for="mDone" class="small">達成済み</label></div>
-      <div class="row" style="display:flex;gap:8px;align-items:center;margin-top:10px">
-        <button id="mDelete" class="danger" type="button">削除</button>
-        <div style="flex:1"></div>
-        <button id="mCancel" type="button">キャンセル</button>
-        <button id="mSave" class="primary" type="button">保存</button>
-      </div>
-      <input type="hidden" id="mId">
-    </div>
-  </dialog>
-
-  <dialog id="settingsDialog" class="modal">
-  <div class="modal">
-    <h3>設定</h3>
-
-    <div class="row">
-      <button id="btnExport" class="primary" type="button">
-        データを書き出す（JSON エクスポート）
+    <div class="editor-actions">
+      <button id="btnDeleteEntry" class="btn-danger" type="button">
+        削除
+      </button>
+      <button id="btnSaveEntry" class="btn-primary" type="button">
+        保存して戻る
       </button>
     </div>
-
-    <div class="row">
-      <label class="small">
-        データを読み込む（JSON インポート）
-        <input id="importFile" type="file" accept="application/json">
-      </label>
-    </div>
-
-    <p class="small">
-      ※ブラウザ内（ローカルストレージ）の日記・予定データだけを対象にします。<br>
-      ※ファイルはあなたの端末内で処理され、サーバーには送信されません。
-    </p>
-
-    <div class="row" style="text-align:right">
-      <button id="btnSettingsClose" type="button">閉じる</button>
-    </div>
   </div>
-</dialog>
 
-  <!-- スケジュール調整用モーダル -->
-  <dialog id="cModal" class="c-modal">
-    <form method="dialog" id="cForm">
-      <div class="c-modal-head">
-        <strong id="cModalTitle">予定</strong>
-        <button class="c-btn" value="cancel" aria-label="閉じる">✕</button>
-      </div>
-      <div class="c-modal-body">
-        <div class="c-grid">
-          <label>タイトル
-            <input id="cf_title" class="c-input" required placeholder="例：A社面談 / 飲み会">
-          </label>
-          <label>相手・場所
-            <input id="cf_party" class="c-input" placeholder="相手名・会場・URLなど">
-          </label>
-        </div>
-        <div class="c-grid-3">
-          <label>日付
-            <input id="cf_date" class="c-input" type="date" required>
-          </label>
-          <label>開始
-            <input id="cf_start" class="c-input" type="time" value="10:00" required>
-          </label>
-          <label>終了
-            <input id="cf_end" class="c-input" type="time" value="11:00" required>
-          </label>
-        </div>
-        <div class="c-grid">
-          <label>カテゴリー（帯色）
-            <select id="cf_color" class="c-input">
-              <option value="#0072B2" selected>仕事/面談（青）</option>
-              <option value="#009E73">プライベート（緑）</option>
-              <option value="#F0E442">調整注意（黄）</option>
-              <option value="#D55E00">重要/締切（赤）</option>
-              <option value="#CC79A7">その他（桃）</option>
-              <option value="#8C8C8C">未分類（灰）</option>
-            </select>
-          </label>
-          <label>ステータス
-            <select id="cf_status" class="c-input">
-              <option value="確定">確定</option>
-              <option value="仮" selected>仮</option>
-              <option value="待ち">返信待ち</option>
-              <option value="注意">調整注意</option>
-              <option value="保留">保留</option>
-              <option value="取消">取消</option>
-            </select>
-          </label>
-        </div>
-        <label>メモ
-          <textarea id="cf_note" class="c-input" rows="3" placeholder="伝達事項・Zoomリンク・移動時間など"></textarea>
-        </label>
-        <div class="c-grid">
-          <label>勤務時間（開始）
-            <input id="cf_workStart" class="c-input" type="time">
-          </label>
-          <label>勤務時間（終了）
-            <input id="cf_workEnd" class="c-input" type="time">
-          </label>
-        </div>
-        <small style="color:#617197">勤務時間を入れると週ビューに淡い緑の「空けたい帯」が表示されます。</small>
-      </div>
-      <div class="c-modal-foot">
-        <button id="cDeleteBtn" class="c-btn c-danger" type="button" style="display:none">削除</button>
-        <div style="display:flex;gap:8px">
-          <button class="c-btn" value="cancel">キャンセル</button>
-          <button id="cSaveBtn" class="c-btn primary" value="default">保存</button>
-        </div>
-      </div>
-      <input type="hidden" id="cf_id">
-    </form>
-  </dialog>
-
-  <!-- 空き候補モーダル -->
-  <dialog id="cSlotsModal" class="c-modal">
-    <div class="c-modal-head">
-      <strong>空き候補（今週）</strong>
-      <button class="c-btn" value="cancel" onclick="document.getElementById('cSlotsModal').close()">✕</button>
-    </div>
-    <div class="c-modal-body" id="cSlotsBody"></div>
-    <div class="c-modal-foot">
-      <span style="color:#617197;font-size:13px">クリックで新規予定の下書きに反映されます。</span>
-      <button class="c-btn" onclick="document.getElementById('cSlotsModal').close()">閉じる</button>
-    </div>
-  </dialog>
-
-  <!-- App -->
-  <script defer src="app.js"></script>
+  <!-- JS -->
+  <script src="app.js" defer></script>
 </body>
 </html>
-
-
-
-
