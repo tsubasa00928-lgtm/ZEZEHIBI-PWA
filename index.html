@@ -2,21 +2,17 @@
 <html lang="ja">
 <head>
   <meta charset="utf-8" />
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no"
-  />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no" />
   <meta name="theme-color" content="#0b1020" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <title>是々日々 — 日記 / 予定 / 検索 / 調整</title>
+  <title>是々日々 — カレンダー＆日記</title>
 
   <!-- PWA -->
   <link rel="manifest" href="manifest.webmanifest" />
-  <!-- アイコン（GitHubの /ICONS 配下を想定）-->
-  <link rel="icon" sizes="192x192" href="ICONS/icon-192.png" />
-  <link rel="icon" sizes="512x512" href="ICONS/icon-512.png" />
-  <link rel="apple-touch-icon" href="ICONS/icon-512.png" />
+  <link rel="icon" sizes="192x192" href="icons/icon-192.png" />
+  <link rel="icon" sizes="512x512" href="icons/icon-512.png" />
+  <link rel="apple-touch-icon" href="icons/maskable-512.png" />
 
   <!-- Styles -->
   <link rel="stylesheet" href="styles.css" />
@@ -25,19 +21,21 @@
   <noscript>このアプリを利用するにはJavaScriptを有効にしてください。</noscript>
 
   <div class="app-root">
-    <!-- ヘッダー -->
-    <header class="top-bar" aria-label="ヘッダー">
-      <div class="top-title">膳是々日々</div>
+
+    <!-- ====== Top (日付のみ) ====== -->
+    <header class="top-bar" aria-label="アプリ上部バー">
+      <div class="top-title" aria-hidden="true">是々日々</div>
       <div id="todayBadge" class="top-today" aria-live="polite"></div>
     </header>
 
-    <!-- メイン -->
-    <main class="main-area" id="main">
-      <!-- ===== ① 日記（カレンダー全面） ===== -->
-      <section id="screenDiary" class="screen screen-active" role="tabpanel" aria-label="日記">
+    <!-- ====== Main area ====== -->
+    <main id="main" class="main-area">
+
+      <!-- ========== Screen: Diary (HOME) カレンダーのみ ========== -->
+      <section id="screenDiary" class="screen screen-active" role="tabpanel" aria-labelledby="tabDiary">
         <div class="month-header">
           <button id="prevM" class="nav-btn" type="button" aria-label="前の月">‹</button>
-          <div id="monthLabel" class="month-label">—</div>
+          <div id="monthLabel" class="month-label" aria-live="polite">—</div>
           <button id="nextM" class="nav-btn" type="button" aria-label="次の月">›</button>
         </div>
 
@@ -46,19 +44,18 @@
           <div class="wd">水</div><div class="wd">木</div><div class="wd">金</div><div class="wd sat">土</div>
         </div>
 
-        <!-- ★ カレンダー全面（下に何も置かない） -->
-        <div id="calGrid" class="calendar-grid" aria-label="カレンダー（ダブルタップ/ダブルクリックで編集）"></div>
+        <!-- カレンダー：ここを最大化して埋める -->
+        <div id="calGrid" class="calendar-grid" aria-label="カレンダー"></div>
 
-        <!-- 選択日のバッジ（必要最低限だけ残す。高さはCSSで最小化） -->
-        <div class="day-summary" id="daySummary" aria-live="polite">
+        <!-- 選択日（見出しだけ。リストは出さない） -->
+        <div class="day-summary" aria-live="polite" style="display:none">
           <span class="badge" id="selISO">—</span>
-          <span id="selJP">—</span>
-          <span class="badge" style="margin-left:auto;">ダブルタップ/ダブルクリックで編集</span>
+          <strong id="selJP">—</strong>
         </div>
       </section>
 
-      <!-- ===== ② 予定（簡易月＋日別リスト） ===== -->
-      <section id="screenSched" class="screen" role="tabpanel" aria-label="予定" hidden>
+      <!-- ========== Screen: Schedules（必要最小のまま保持） ========== -->
+      <section id="screenSched" class="screen" role="tabpanel" aria-labelledby="tabSched" hidden>
         <div class="month-header">
           <button id="sPrevM" class="nav-btn" type="button" aria-label="前の月">‹</button>
           <div id="schedMonthLabel" class="month-label">—</div>
@@ -73,14 +70,14 @@
         <div id="schedGrid" class="calendar-grid" aria-label="予定カレンダー"></div>
 
         <div class="section-header">
-          <h2>当日の予定</h2>
-          <div id="schedKPI" class="badge">—</div>
+          <h2>この日の予定</h2>
+          <div id="schedKPI" class="top-today"></div>
         </div>
         <div id="schedList" class="card-list"></div>
       </section>
 
-      <!-- ===== ③ 検索 ===== -->
-      <section id="screenSearch" class="screen" role="tabpanel" aria-label="検索" hidden>
+      <!-- ========== Screen: Search ========== -->
+      <section id="screenSearch" class="screen" role="tabpanel" aria-labelledby="tabSearch" hidden>
         <div class="section-header">
           <h2>検索</h2>
         </div>
@@ -99,87 +96,75 @@
         </div>
       </section>
 
-      <!-- ===== ④ 調整（簡易） ===== -->
-      <section id="screenCoord" class="screen" role="tabpanel" aria-label="スケジュール調整" hidden>
+      <!-- ========== Screen: Schedule Coordination（簡易） ========== -->
+      <section id="screenCoord" class="screen" role="tabpanel" aria-labelledby="tabCoord" hidden>
         <div class="coord-header">
-          <span class="badge">調整用（簡易表示）</span>
+          <h2 style="margin:0;font-size:14px;">スケジュール調整（簡易）</h2>
         </div>
-        <div class="bands-list" id="coordList">
-          <div class="band-row">
-            <span>空き候補は予定の重なりから算出（app.jsで実装）</span>
-            <span class="badge">β</span>
-          </div>
+        <div class="bands-list" id="bandsList">
+          <!-- 必要に応じて app.js でレンダリング -->
         </div>
       </section>
 
-      <!-- ===== ⑤ エディタ（別画面に統合） ===== -->
-      <section id="screenEditor" class="screen" role="dialog" aria-label="日記エディタ" hidden>
+      <!-- ========== Screen: Editor（別画面） ========== -->
+      <section id="screenEditor" class="screen" role="tabpanel" aria-labelledby="tabEditor" hidden>
         <dialog id="editorDlg" class="modal" open>
-          <div class="modal-body">
-            <div class="section-header">
-              <h2 style="font-size:13px;margin:0">日記エディタ</h2>
+          <form method="dialog" class="modal-body" id="editorForm">
+            <div style="display:flex;align-items:center;gap:8px;justify-content:space-between;">
+              <div>
+                <span id="editISO" class="badge">—</span>
+                <strong id="editJP">—</strong>
+              </div>
               <button id="backToCalendar" class="sub-btn" type="button">カレンダーへ戻る</button>
             </div>
 
-            <div class="grid-2">
-              <div class="field-label">
-                <span>日付</span>
-                <input id="dateInput" type="date" />
-              </div>
-              <div class="field-label">
-                <span>起床</span>
-                <input id="wake" type="time" />
-              </div>
-            </div>
+            <label class="field-label">日付
+              <input id="dateInput" type="date" />
+            </label>
 
             <div class="grid-3">
-              <div class="field-label">
-                <span>朝食</span>
-                <input id="breakfast" type="text" placeholder="例：パンと卵" />
-              </div>
-              <div class="field-label">
-                <span>昼食</span>
-                <input id="lunch" type="text" placeholder="例：親子丼" />
-              </div>
-              <div class="field-label">
-                <span>夕食</span>
-                <input id="dinner" type="text" placeholder="例：カレー" />
-              </div>
+              <label class="field-label">起床
+                <input id="wake" type="time" />
+              </label>
+              <label class="field-label">朝食
+                <input id="breakfast" type="text" placeholder="例：トースト、卵" />
+              </label>
+              <label class="field-label">昼食
+                <input id="lunch" type="text" placeholder="例：パスタ" />
+              </label>
             </div>
 
-            <div class="field-label">
-              <span>タイトル</span>
+            <label class="field-label">夕食
+              <input id="dinner" type="text" placeholder="例：カレー" />
+            </label>
+
+            <label class="field-label">タイトル
               <input id="title" type="text" placeholder="タイトル" />
-            </div>
+            </label>
 
-            <div class="field-label">
-              <span>本文</span>
+            <label class="field-label">本文
               <textarea id="body" rows="8" placeholder="本文"></textarea>
-            </div>
+            </label>
 
             <div class="modal-actions">
-              <span class="badge" id="editISO">—</span>
-              <span id="editJP" style="font-size:10px;color:var(--text-sub)">—</span>
+              <span id="saveState" class="top-today">—</span>
               <div class="flex-spacer"></div>
-              <small id="saveState" class="card-sub">—</small>
               <button id="deleteEntry" class="danger-btn" type="button">削除</button>
               <button id="saveEntry" class="primary-btn" type="button">保存</button>
             </div>
-          </div>
+          </form>
         </dialog>
       </section>
+
     </main>
 
-    <!-- タブバー（ホームバー回避で少し浮かせる） -->
+    <!-- ====== Bottom Tab Bar ====== -->
     <nav class="tab-bar" role="tablist" aria-label="メインタブ">
-      <button id="tabDiary" class="tab-btn tab-active" aria-controls="screenDiary" aria-selected="true">日記</button>
-      <button id="tabSched" class="tab-btn" aria-controls="screenSched" aria-selected="false">予定</button>
+      <button id="tabDiary"  class="tab-btn tab-active" aria-controls="screenDiary" aria-selected="true">日記</button>
+      <button id="tabSched"  class="tab-btn" aria-controls="screenSched" aria-selected="false">予定</button>
       <button id="tabSearch" class="tab-btn" aria-controls="screenSearch" aria-selected="false">検索</button>
-      <button id="tabCoord" class="tab-btn" aria-controls="screenCoord" aria-selected="false">調整</button>
+      <button id="tabCoord"  class="tab-btn" aria-controls="screenCoord" aria-selected="false">調整</button>
     </nav>
-
-    <!-- iPhoneホームバーとの重なり防止のための下余白 -->
-    <div style="height: calc(env(safe-area-inset-bottom, 0px) + 64px)"></div>
   </div>
 
   <!-- App -->
