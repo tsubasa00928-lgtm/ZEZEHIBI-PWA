@@ -1,373 +1,397 @@
-// ===============================
-// 是々日々 app.js（Firebase同期版）
-// ===============================
+// app.js  --- main logic + Firebase + calendar + diary sync
 
-// ---- ユーティリティ ----
-const LS_KEY = "zezehibi_diary_v1";
-const WJP = ["日", "月", "火", "水", "木", "金", "土"];
+// ===== Firebase (v11) import =====
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-analytics.js";
+import {
+  getAuth,
+  signInAnonymously,
+  onAuthStateChanged,
+} from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
+import {
+  getFirestore,
+  doc,
+  setDoc,
+  getDoc,
+  collection,
+  getDocs,
+} from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 
-const toISO = (d) => {
-  if (!(d instanceof Date)) d = new Date(d);
-  const t = new Date(d.getTime() - d.getTimezoneOffset() * 60000);
-  return t.toISOString().slice(0, 10);
+// ===== Firebase config (ZEZEHIBI プロジェクト) =====
+const firebaseConfig = {
+  apiKey: "AIzaSyAXhTD5pg9_PdNH-7qNHVt9SlCHXxXAzSY",
+  authDomain: "zezehibi.firebaseapp.com",
+  projectId: "zezehibi",
+  storageBucket: "zezehibi.firebasestorage.app",
+  messagingSenderId: "222553318634",
+  appId: "1:222553318634:web:a0454885d44758b085e393",
+  measurementId: "G-CGMZN2RB9G",
 };
 
-const fmtJP = (iso) => {
-  const [y, m, d] = iso.split("-").map(Number);
-  const dt = new Date(y, m - 1, d);
-  return `${m}月${d}日(${WJP[dt.getDay()]})`;
-};
+// ===== Initialize Firebase =====
+const app = initializeApp(firebaseConfig);
+let analytics = null;
+try {
+  analytics = getAnalytics(app);
+} catch (e) {
+  // ローカル環境(file://)などでは analytics が失敗するので無視
+}
 
-function loadLocal() {
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+// ===== App state =====
+let currentUserId = null;
+let currentDate = new Date();
+let selectedDateStr = formatDateKey(currentDate); // YYYY-MM-DD
+
+// ローカルキャッシュ（日記）
+let cacheEntries = loadLocalEntries();
+
+// ===== Utility =====
+function formatDateKey(date) {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
+function parseDateKey(key) {
+  const [y, m, d] = key.split("-").map(Number);
+  return new Date(y, m - 1, d);
+}
+
+function loadLocalEntries() {
   try {
-    const raw = localStorage.getItem(LS_KEY);
-    if (!raw) return {};
-    const obj = JSON.parse(raw);
-    if (typeof obj !== "object" || !obj) return {};
-    return obj;
+    const raw = localStorage.getItem("zezehibi_entries");
+    return raw ? JSON.parse(raw) : {};
   } catch (e) {
-    console.warn("loadLocal error", e);
     return {};
   }
 }
-
-function saveLocal(map) {
-  try {
-    localStorage.setItem(LS_KEY, JSON.stringify(map));
-  } catch (e) {
-    console.warn("saveLocal error", e);
-  }
+function saveLocalEntries() {
+  localStorage.setItem("zezehibi_entries", JSON.stringify(cacheEntries));
 }
 
-// ---- 状態 ----
-let currentUser = null;
-let diaryMap = loadLocal(); // { "2025-11-13": {...}, ... }
-let currentMonth = (() => {
-  const d = new Date();
-  d.setDate(1);
-  return d;
-})();
-let selectedDateISO = toISO(new Date());
-let editingDateISO = null;
-
-// ---- DOM 取得 ----
-const screenLogin = document.getElementById("screenLogin");
-const screenHome = document.getElementById("screenHome");
-const screenEditor = document.getElementById("screenEditor");
-
-const loginEmail = document.getElementById("loginEmail");
-const loginPass = document.getElementById("loginPass");
-const loginBtn = document.getElementById("loginBtn");
-const registerBtn = document.getElementById("registerBtn");
-
-const topToday = document.getElementById("topToday");
+// ===== DOM refs =====
+const todayLabel = document.getElementById("todayLabel");
 const monthLabel = document.getElementById("monthLabel");
-const prevMonthBtn = document.getElementById("prevMonth");
-const nextMonthBtn = document.getElementById("nextMonth");
 const calendarGrid = document.getElementById("calendarGrid");
 
-const backHomeBtn = document.getElementById("backHome");
-const editDateLabel = document.getElementById("editDateLabel");
+const prevMonthBtn = document.getElementById("prevMonthBtn");
+const nextMonthBtn = document.getElementById("nextMonthBtn");
+
+const screenCalendar = document.getElementById("screen-calendar");
+const screenDiary = document.getElementById("screen-diary");
+const screenSchedule = document.getElementById("screen-schedule");
+const screenSearch = document.getElementById("screen-search");
+const screenAdjust = document.getElementById("screen-adjust");
+
+const diaryDateTitle = document.getElementById("diaryDateTitle");
+const diaryTitleInput = document.getElementById("diaryTitleInput");
+const diaryBodyInput = document.getElementById("diaryBodyInput");
+const sleepInput = document.getElementById("sleepInput");
 const wakeInput = document.getElementById("wakeInput");
-const breakfastInput = document.getElementById("breakfastInput");
-const lunchInput = document.getElementById("lunchInput");
-const dinnerInput = document.getElementById("dinnerInput");
-const titleInput = document.getElementById("titleInput");
-const bodyInput = document.getElementById("bodyInput");
+const mealsInput = document.getElementById("mealsInput");
+
 const saveDiaryBtn = document.getElementById("saveDiaryBtn");
+const deleteDiaryBtn = document.getElementById("deleteDiaryBtn");
+const backToCalendarBtn = document.getElementById("backToCalendarBtn");
+
+const searchInput = document.getElementById("searchInput");
+const searchResults = document.getElementById("searchResults");
 
 const tabButtons = document.querySelectorAll(".tab-btn");
 
-// ---- 画面切り替え ----
-function showScreen(name) {
-  screenLogin.classList.remove("screen-active");
-  screenHome.classList.remove("screen-active");
-  screenEditor.classList.remove("screen-active");
+// ===== 初期処理 =====
+initAuth();
+setupBasicUI();
+renderCalendar();
 
-  if (name === "login") screenLogin.classList.add("screen-active");
-  if (name === "home") screenHome.classList.add("screen-active");
-  if (name === "editor") screenEditor.classList.add("screen-active");
+// --- Auth: 匿名ログインしてUIDを持つ ---
+function initAuth() {
+  onAuthStateChanged(auth, (user) => {
+    if (user) {
+      currentUserId = user.uid;
+      // Firestore から軽く同期（必要最低限）
+      // ここでは全部取得してローカルにマージ
+      syncFromFirestore().catch(console.error);
+    } else {
+      signInAnonymously(auth).catch(console.error);
+    }
+  });
 }
 
-// ---- Auth 関連 ----
-auth.onAuthStateChanged(async (user) => {
-  currentUser = user;
-
-  if (user) {
-    // ログイン時
-    console.log("Logged in as", user.uid);
-    showScreen("home");
-    updateTopToday();
-    await syncFromFirestore();
-    renderCalendar();
-  } else {
-    // ログアウト時
-    console.log("Logged out");
-    showScreen("login");
-  }
-});
-
-loginBtn.addEventListener("click", async () => {
-  const email = (loginEmail.value || "").trim();
-  const pass = loginPass.value || "";
-  if (!email || !pass) {
-    alert("メールアドレスとパスワードを入力してください。");
-    return;
-  }
-  try {
-    await auth.signInWithEmailAndPassword(email, pass);
-  } catch (e) {
-    console.error(e);
-    alert("ログインに失敗しました: " + (e.message || e.code));
-  }
-});
-
-registerBtn.addEventListener("click", async () => {
-  const email = (loginEmail.value || "").trim();
-  const pass = loginPass.value || "";
-  if (!email || !pass) {
-    alert("メールアドレスとパスワードを入力してください。");
-    return;
-  }
-  try {
-    await auth.createUserWithEmailAndPassword(email, pass);
-    alert("アカウントを作成しました。");
-  } catch (e) {
-    console.error(e);
-    alert("登録に失敗しました: " + (e.message || e.code));
-  }
-});
-
-// ---- Firestore 同期 ----
+// Firestore → ローカルへ同期
 async function syncFromFirestore() {
-  if (!currentUser) return;
-  try {
-    const snap = await db
-      .collection("users")
-      .doc(currentUser.uid)
-      .collection("entries")
-      .get();
+  if (!currentUserId) return;
+  const colRef = collection(db, "users", currentUserId, "entries");
+  const snapshot = await getDocs(colRef);
+  snapshot.forEach((docSnap) => {
+    cacheEntries[docSnap.id] = docSnap.data();
+  });
+  saveLocalEntries();
+  renderCalendar(); // タイトルを反映
+}
 
-    const newMap = {};
-    snap.forEach((doc) => {
-      const data = doc.data();
-      if (data && data.date) {
-        newMap[data.date] = data;
-      }
+// ===== UI イベントのセットアップ =====
+function setupBasicUI() {
+  const now = new Date();
+  const label = `${now.getFullYear()}年${now.getMonth() + 1}月${now.getDate()}日`;
+  todayLabel.textContent = label;
+
+  prevMonthBtn.addEventListener("click", () => {
+    currentDate.setMonth(currentDate.getMonth() - 1);
+    renderCalendar();
+  });
+  nextMonthBtn.addEventListener("click", () => {
+    currentDate.setMonth(currentDate.getMonth() + 1);
+    renderCalendar();
+  });
+
+  backToCalendarBtn.addEventListener("click", () => {
+    switchScreen("calendar");
+  });
+
+  saveDiaryBtn.addEventListener("click", () => {
+    saveDiary().catch(console.error);
+  });
+  deleteDiaryBtn.addEventListener("click", () => {
+    deleteDiary().catch(console.error);
+  });
+
+  // タブ切り替え
+  tabButtons.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const screen = btn.dataset.screen;
+      tabButtons.forEach((b) => b.classList.remove("tab-active", "active"));
+      btn.classList.add("tab-active", "active");
+      switchScreen(screen);
     });
+  });
 
-    // ローカルとマージ（ローカルにだけある日記は一応残す）
-    diaryMap = { ...diaryMap, ...newMap };
-    saveLocal(diaryMap);
-  } catch (e) {
-    console.error("syncFromFirestore error", e);
-  }
+  // 検索
+  searchInput.addEventListener("input", () => {
+    renderSearchResults(searchInput.value.trim());
+  });
 }
 
-async function saveEntryToFirestore(entry) {
-  if (!currentUser) return;
-  try {
-    await db
-      .collection("users")
-      .doc(currentUser.uid)
-      .collection("entries")
-      .doc(entry.date)
-      .set(entry);
-  } catch (e) {
-    console.error("saveEntryToFirestore error", e);
-  }
+// ===== 画面切り替え =====
+function switchScreen(screenName) {
+  const screens = {
+    calendar: screenCalendar,
+    diary: screenDiary,
+    schedule: screenSchedule,
+    search: screenSearch,
+    adjust: screenAdjust,
+  };
+  Object.values(screens).forEach((el) => el.classList.remove("screen-active", "active"));
+  const target = screens[screenName];
+  if (target) target.classList.add("screen-active", "active");
 }
 
-// ---- トップ日付表示 ----
-function updateTopToday() {
-  const t = new Date();
-  const iso = toISO(t);
-  topToday.textContent = `${t.getFullYear()}年${t.getMonth() + 1}月${t.getDate()}日(${WJP[t.getDay()]}) / ${iso}`;
-}
-
-// ---- カレンダー描画 ----
+// ===== カレンダー描画 =====
 function renderCalendar() {
-  const y = currentMonth.getFullYear();
-  const m = currentMonth.getMonth(); // 0-based
+  const year = currentDate.getFullYear();
+  const month = currentDate.getMonth(); // 0-11
 
-  monthLabel.textContent = `${y}年 ${m + 1}月`;
+  monthLabel.textContent = `${year}年${month + 1}月`;
+
+  // 1日の曜日
+  const firstDay = new Date(year, month, 1);
+  const startWeekday = firstDay.getDay(); // 0(日)〜6(土)
+  // 月末日
+  const lastDay = new Date(year, month + 1, 0).getDate();
+
+  // 前月の末日
+  const prevLastDay = new Date(year, month, 0).getDate();
 
   calendarGrid.innerHTML = "";
 
-  const firstOfMonth = new Date(y, m, 1);
-  const firstDay = firstOfMonth.getDay(); // 0:日〜6:土
-  const startOffset = firstDay; // 日曜始まり
-  const firstCellDate = new Date(y, m, 1 - startOffset);
+  const totalCells = 42; // 7×6
+  let dayNum = 1;
+  let nextMonthDay = 1;
 
-  const todayISO = toISO(new Date());
-
-  for (let i = 0; i < 42; i++) {
-    const d = new Date(firstCellDate);
-    d.setDate(firstCellDate.getDate() + i);
-    const iso = toISO(d);
-    const inMonth = d.getMonth() === m;
-    const dow = d.getDay();
-
+  for (let i = 0; i < totalCells; i++) {
     const cell = document.createElement("div");
     cell.className = "day-cell";
-    if (!inMonth) cell.classList.add("out");
-    if (dow === 0) cell.classList.add("sun");
-    if (dow === 6) cell.classList.add("sat");
-    if (iso === todayISO) cell.classList.add("today");
-    if (iso === selectedDateISO) cell.classList.add("selected");
 
-    cell.dataset.iso = iso;
+    let thisDate;
+    let displayNum;
+    let isOut = false;
 
-    const num = document.createElement("div");
-    num.className = "day-num";
-    num.textContent = d.getDate();
-
-    const tags = document.createElement("div");
-    tags.className = "day-tags";
-
-    const entry = diaryMap[iso];
-    if (entry) {
-      const base =
-        (entry.title && entry.title.trim()) ||
-        (entry.body && entry.body.trim().split("\n")[0]) ||
-        "";
-      tags.textContent = base;
+    if (i < startWeekday) {
+      // 前月
+      displayNum = prevLastDay - startWeekday + 1 + i;
+      thisDate = new Date(year, month - 1, displayNum);
+      isOut = true;
+    } else if (dayNum > lastDay) {
+      // 次月
+      displayNum = nextMonthDay++;
+      thisDate = new Date(year, month + 1, displayNum);
+      isOut = true;
     } else {
-      tags.textContent = "";
+      // 今月
+      displayNum = dayNum++;
+      thisDate = new Date(year, month, displayNum);
     }
 
-    cell.appendChild(num);
-    cell.appendChild(tags);
+    const dateKey = formatDateKey(thisDate);
 
-    // クリック → 選択のみ
+    // 曜日クラス
+    const weekday = thisDate.getDay();
+    if (weekday === 0) cell.classList.add("sun");
+    if (weekday === 6) cell.classList.add("sat");
+    if (isOut) cell.classList.add("out");
+
+    // 今日ハイライト
+    const today = new Date();
+    if (
+      thisDate.getFullYear() === today.getFullYear() &&
+      thisDate.getMonth() === today.getMonth() &&
+      thisDate.getDate() === today.getDate()
+    ) {
+      cell.classList.add("today");
+    }
+
+    // 選択中
+    if (dateKey === selectedDateStr) {
+      cell.classList.add("selected");
+    }
+
+    // 中身
+    const numEl = document.createElement("div");
+    numEl.className = "day-num";
+    numEl.textContent = displayNum;
+
+    const tagsEl = document.createElement("div");
+    tagsEl.className = "day-tags";
+    const entry = cacheEntries[dateKey];
+    if (entry && entry.title) {
+      tagsEl.textContent = entry.title;
+    } else if (entry && entry.body) {
+      tagsEl.textContent = entry.body.slice(0, 18);
+    } else {
+      tagsEl.textContent = "";
+    }
+
+    cell.appendChild(numEl);
+    cell.appendChild(tagsEl);
+
+    // シングルタップで選択、ダブルタップで日記画面へ
+    let lastTapTime = 0;
     cell.addEventListener("click", () => {
-      selectedDateISO = iso;
-      renderCalendar();
-    });
-
-    // ダブルクリック / ダブルタップでエディタへ
-    cell.addEventListener("dblclick", () => {
-      openEditor(iso);
-    });
-
-    let lastTap = 0;
-    cell.addEventListener("touchend", (ev) => {
       const now = Date.now();
-      if (now - lastTap < 300) {
-        ev.preventDefault();
-        openEditor(iso);
+      const delta = now - lastTapTime;
+      lastTapTime = now;
+
+      selectedDateStr = dateKey;
+      renderCalendar(); // 選択ハイライト更新
+
+      if (delta < 280) {
+        // ダブルタップ / ダブルクリックとみなす
+        openDiaryScreen(dateKey);
       }
-      lastTap = now;
     });
 
     calendarGrid.appendChild(cell);
   }
 }
 
-// ---- エディタ ----
-function openEditor(iso) {
-  editingDateISO = iso;
+// ===== 日記画面オープン =====
+function openDiaryScreen(dateKey) {
+  selectedDateStr = dateKey;
+  const d = parseDateKey(dateKey);
+  diaryDateTitle.textContent = `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日の日記`;
 
-  let entry = diaryMap[iso];
-  if (!entry) {
-    entry = {
-      date: iso,
-      wake: "",
-      breakfast: "",
-      lunch: "",
-      dinner: "",
-      title: "",
-      body: "",
-      createdAt: Date.now(),
-      updatedAt: Date.now()
-    };
-    diaryMap[iso] = entry;
-    saveLocal(diaryMap);
-  }
-
-  editDateLabel.textContent = fmtJP(iso);
+  const entry = cacheEntries[dateKey] || {};
+  diaryTitleInput.value = entry.title || "";
+  diaryBodyInput.value = entry.body || "";
+  sleepInput.value = entry.sleep || "";
   wakeInput.value = entry.wake || "";
-  breakfastInput.value = entry.breakfast || "";
-  lunchInput.value = entry.lunch || "";
-  dinnerInput.value = entry.dinner || "";
-  titleInput.value = entry.title || "";
-  bodyInput.value = entry.body || "";
+  mealsInput.value = entry.meals || "";
 
-  showScreen("editor");
+  switchScreen("diary");
 }
 
-async function saveCurrentEntry() {
-  if (!editingDateISO) return;
-  const e = diaryMap[editingDateISO] || {
-    date: editingDateISO,
-    createdAt: Date.now()
+// ===== 日記保存 =====
+async function saveDiary() {
+  const data = {
+    date: selectedDateStr,
+    title: diaryTitleInput.value.trim(),
+    body: diaryBodyInput.value.trim(),
+    sleep: sleepInput.value || "",
+    wake: wakeInput.value || "",
+    meals: mealsInput.value.trim(),
+    updatedAt: new Date().toISOString(),
   };
 
-  e.wake = wakeInput.value || "";
-  e.breakfast = breakfastInput.value || "";
-  e.lunch = lunchInput.value || "";
-  e.dinner = dinnerInput.value || "";
-  e.title = titleInput.value || "";
-  e.body = bodyInput.value || "";
-  e.updatedAt = Date.now();
-
-  diaryMap[editingDateISO] = e;
-  saveLocal(diaryMap);
-  await saveEntryToFirestore(e);
-
-  selectedDateISO = editingDateISO;
+  // 空なら削除扱いでもいいが、ここではそのまま保存
+  cacheEntries[selectedDateStr] = data;
+  saveLocalEntries();
   renderCalendar();
-  showScreen("home");
+
+  if (currentUserId) {
+    const ref = doc(db, "users", currentUserId, "entries", selectedDateStr);
+    await setDoc(ref, data, { merge: true });
+  }
+  alert("保存しました");
 }
 
-// ---- イベント配線 ----
+// ===== 日記削除 =====
+async function deleteDiary() {
+  if (!cacheEntries[selectedDateStr]) return;
+  if (!confirm("この日の記録を削除しますか？")) return;
 
-// 月移動
-prevMonthBtn.addEventListener("click", () => {
-  currentMonth.setMonth(currentMonth.getMonth() - 1);
+  delete cacheEntries[selectedDateStr];
+  saveLocalEntries();
   renderCalendar();
-});
-nextMonthBtn.addEventListener("click", () => {
-  currentMonth.setMonth(currentMonth.getMonth() + 1);
-  renderCalendar();
-});
 
-// エディタから戻る
-backHomeBtn.addEventListener("click", () => {
-  showScreen("home");
-});
+  if (currentUserId) {
+    const ref = doc(db, "users", currentUserId, "entries", selectedDateStr);
+    await setDoc(ref, { deleted: true }, { merge: true });
+  }
+  diaryTitleInput.value = "";
+  diaryBodyInput.value = "";
+  sleepInput.value = "";
+  wakeInput.value = "";
+  mealsInput.value = "";
+  alert("削除しました");
+}
 
-// 保存ボタン
-saveDiaryBtn.addEventListener("click", () => {
-  saveCurrentEntry();
-});
+// ===== 検索 =====
+function renderSearchResults(keyword) {
+  searchResults.innerHTML = "";
+  if (!keyword) return;
 
-// タブバー（今は日記タブだけ本格運用、それ以外はメッセージ）
-tabButtons.forEach((btn) => {
-  btn.addEventListener("click", () => {
-    tabButtons.forEach((b) => b.classList.remove("tab-active", "active"));
-    btn.classList.add("tab-active", "active");
+  const lower = keyword.toLowerCase();
+  const entries = Object.entries(cacheEntries)
+    .filter(([dateKey, e]) => {
+      if (!e || e.deleted) return false;
+      const text = `${e.title || ""} ${e.body || ""}`.toLowerCase();
+      return text.includes(lower);
+    })
+    .sort(([a], [b]) => (a < b ? 1 : -1)); // 新しい順
 
-    const tab = btn.dataset.tab;
-    if (tab === "home") {
-      showScreen("home");
-    } else {
-      alert("このタブは今後拡張予定です。（いまは日記のみ稼働中）");
-      // 見た目だけ戻す
-      tabButtons.forEach((b) => {
-        if (b.dataset.tab === "home") {
-          b.classList.add("tab-active", "active");
-        }
-      });
-      showScreen("home");
-    }
-  });
-});
+  for (const [dateKey, e] of entries) {
+    const d = parseDateKey(dateKey);
+    const card = document.createElement("div");
+    card.className = "card";
+    const title = document.createElement("div");
+    title.className = "card-title";
+    title.textContent = e.title || `${d.getMonth() + 1}月${d.getDate()}日`;
 
-// ---- 初期化 ----
-(function init() {
-  // ログイン状態に応じて onAuthStateChanged が動くので、ここでは最小限
-  updateTopToday();
-  // 非ログイン時でもとりあえずローカルのカレンダーは出せるようにしておく
-  renderCalendar();
-})();
+    const sub = document.createElement("div");
+    sub.className = "card-sub";
+    sub.textContent = (e.body || "").slice(0, 50);
+
+    card.appendChild(title);
+    card.appendChild(sub);
+
+    card.addEventListener("click", () => {
+      selectedDateStr = dateKey;
+      openDiaryScreen(dateKey);
+    });
+
+    searchResults.appendChild(card);
+  }
+}
