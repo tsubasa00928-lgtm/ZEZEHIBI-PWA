@@ -1,23 +1,35 @@
-// app.js  --- main logic + Firebase + calendar + diary sync
+/* =========================================================
+   是々日々 app.js ― Firebase同期版 / Googleログイン
+   ========================================================= */
 
-// ===== Firebase (v11) import =====
-import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
-import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-analytics.js";
+/* -----------------------------
+   Firebase インポート
+----------------------------- */
+// Firebase Web v10 (ESM CDN)
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.2/firebase-app.js";
+import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.7.2/firebase-analytics.js";
+
 import {
   getAuth,
-  signInAnonymously,
-  onAuthStateChanged,
-} from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
+  GoogleAuthProvider,
+  signInWithPopup,
+  signOut,
+  onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/10.7.2/firebase-auth.js";
+
 import {
   getFirestore,
+  collection,
   doc,
   setDoc,
-  getDoc,
-  collection,
   getDocs,
-} from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+  deleteDoc,
+  serverTimestamp
+} from "https://www.gstatic.com/firebasejs/10.7.2/firebase-firestore.js";
 
-// ===== Firebase config (ZEZEHIBI プロジェクト) =====
+/* -----------------------------
+   Firebase 初期化（あなたの設定）
+----------------------------- */
 const firebaseConfig = {
   apiKey: "AIzaSyAXhTD5pg9_PdNH-7qNHVt9SlCHXxXAzSY",
   authDomain: "zezehibi.firebaseapp.com",
@@ -25,373 +37,361 @@ const firebaseConfig = {
   storageBucket: "zezehibi.firebasestorage.app",
   messagingSenderId: "222553318634",
   appId: "1:222553318634:web:a0454885d44758b085e393",
-  measurementId: "G-CGMZN2RB9G",
+  measurementId: "G-CGMZN2RB9G"
 };
 
-// ===== Initialize Firebase =====
 const app = initializeApp(firebaseConfig);
-let analytics = null;
-try {
-  analytics = getAnalytics(app);
-} catch (e) {
-  // ローカル環境(file://)などでは analytics が失敗するので無視
-}
+getAnalytics(app);
 
 const auth = getAuth(app);
+const provider = new GoogleAuthProvider();
 const db = getFirestore(app);
 
-// ===== App state =====
-let currentUserId = null;
-let currentDate = new Date();
-let selectedDateStr = formatDateKey(currentDate); // YYYY-MM-DD
+/* =========================================================
+   DOM 要素取得
+========================================================= */
+const loginScreen = document.getElementById("login-screen");
+const appScreen = document.getElementById("app-screen");
+const googleLoginBtn = document.getElementById("google-login");
 
-// ローカルキャッシュ（日記）
-let cacheEntries = loadLocalEntries();
+const monthLabel = document.getElementById("month-label");
+const calendarGrid = document.getElementById("calendar-grid");
+const todayLabel = document.getElementById("today-label");
 
-// ===== Utility =====
-function formatDateKey(date) {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, "0");
-  const d = String(date.getDate()).padStart(2, "0");
-  return `${y}-${m}-${d}`;
-}
-function parseDateKey(key) {
-  const [y, m, d] = key.split("-").map(Number);
-  return new Date(y, m - 1, d);
-}
+const prevMonthBtn = document.getElementById("prev-month");
+const nextMonthBtn = document.getElementById("next-month");
 
-function loadLocalEntries() {
+const tabButtons = document.querySelectorAll(".tab-btn");
+const screens = {
+  calendar: document.getElementById("screen-calendar"),
+  diary: document.getElementById("screen-diary"),
+  search: document.getElementById("screen-search"),
+  coord: document.getElementById("screen-coord")
+};
+
+/* =========================================================
+   日記データ管理（ローカル＋クラウド）
+========================================================= */
+
+// ローカルストレージキー
+const LOCAL_KEY = "zezehibi_diary";
+
+// ローカルキャッシュ {dateKey: {title, body}}
+let diaryData = loadLocalDiary();
+
+// ログイン中の Firebase ユーザー
+let currentUser = null;
+
+/* -----------------------------
+   ローカル読み込み
+----------------------------- */
+function loadLocalDiary() {
   try {
-    const raw = localStorage.getItem("zezehibi_entries");
-    return raw ? JSON.parse(raw) : {};
-  } catch (e) {
+    const raw = localStorage.getItem(LOCAL_KEY);
+    if (!raw) return {};
+    return JSON.parse(raw) || {};
+  } catch {
     return {};
   }
 }
-function saveLocalEntries() {
-  localStorage.setItem("zezehibi_entries", JSON.stringify(cacheEntries));
+
+function saveLocalDiary() {
+  localStorage.setItem(LOCAL_KEY, JSON.stringify(diaryData));
 }
 
-// ===== DOM refs =====
-const todayLabel = document.getElementById("todayLabel");
-const monthLabel = document.getElementById("monthLabel");
-const calendarGrid = document.getElementById("calendarGrid");
-
-const prevMonthBtn = document.getElementById("prevMonthBtn");
-const nextMonthBtn = document.getElementById("nextMonthBtn");
-
-const screenCalendar = document.getElementById("screen-calendar");
-const screenDiary = document.getElementById("screen-diary");
-const screenSchedule = document.getElementById("screen-schedule");
-const screenSearch = document.getElementById("screen-search");
-const screenAdjust = document.getElementById("screen-adjust");
-
-const diaryDateTitle = document.getElementById("diaryDateTitle");
-const diaryTitleInput = document.getElementById("diaryTitleInput");
-const diaryBodyInput = document.getElementById("diaryBodyInput");
-const sleepInput = document.getElementById("sleepInput");
-const wakeInput = document.getElementById("wakeInput");
-const mealsInput = document.getElementById("mealsInput");
-
-const saveDiaryBtn = document.getElementById("saveDiaryBtn");
-const deleteDiaryBtn = document.getElementById("deleteDiaryBtn");
-const backToCalendarBtn = document.getElementById("backToCalendarBtn");
-
-const searchInput = document.getElementById("searchInput");
-const searchResults = document.getElementById("searchResults");
-
-const tabButtons = document.querySelectorAll(".tab-btn");
-
-// ===== 初期処理 =====
-initAuth();
-setupBasicUI();
-renderCalendar();
-
-// --- Auth: 匿名ログインしてUIDを持つ ---
-function initAuth() {
-  onAuthStateChanged(auth, (user) => {
-    if (user) {
-      currentUserId = user.uid;
-      // Firestore から軽く同期（必要最低限）
-      // ここでは全部取得してローカルにマージ
-      syncFromFirestore().catch(console.error);
-    } else {
-      signInAnonymously(auth).catch(console.error);
-    }
-  });
+/* -----------------------------
+   日付ユーティリティ
+----------------------------- */
+function pad(n) {
+  return n.toString().padStart(2, "0");
 }
 
-// Firestore → ローカルへ同期
-async function syncFromFirestore() {
-  if (!currentUserId) return;
-  const colRef = collection(db, "users", currentUserId, "entries");
-  const snapshot = await getDocs(colRef);
-  snapshot.forEach((docSnap) => {
-    cacheEntries[docSnap.id] = docSnap.data();
-  });
-  saveLocalEntries();
-  renderCalendar(); // タイトルを反映
+function dateKey(d) {
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 }
 
-// ===== UI イベントのセットアップ =====
-function setupBasicUI() {
-  const now = new Date();
-  const label = `${now.getFullYear()}年${now.getMonth() + 1}月${now.getDate()}日`;
-  todayLabel.textContent = label;
-
-  prevMonthBtn.addEventListener("click", () => {
-    currentDate.setMonth(currentDate.getMonth() - 1);
-    renderCalendar();
-  });
-  nextMonthBtn.addEventListener("click", () => {
-    currentDate.setMonth(currentDate.getMonth() + 1);
-    renderCalendar();
-  });
-
-  backToCalendarBtn.addEventListener("click", () => {
-    switchScreen("calendar");
-  });
-
-  saveDiaryBtn.addEventListener("click", () => {
-    saveDiary().catch(console.error);
-  });
-  deleteDiaryBtn.addEventListener("click", () => {
-    deleteDiary().catch(console.error);
-  });
-
-  // タブ切り替え
-  tabButtons.forEach((btn) => {
-    btn.addEventListener("click", () => {
-      const screen = btn.dataset.screen;
-      tabButtons.forEach((b) => b.classList.remove("tab-active", "active"));
-      btn.classList.add("tab-active", "active");
-      switchScreen(screen);
-    });
-  });
-
-  // 検索
-  searchInput.addEventListener("input", () => {
-    renderSearchResults(searchInput.value.trim());
-  });
+function dateKeyFromYMD(y, m, d) {
+  return `${y}-${pad(m)}-${pad(d)}`;
 }
 
-// ===== 画面切り替え =====
-function switchScreen(screenName) {
-  const screens = {
-    calendar: screenCalendar,
-    diary: screenDiary,
-    schedule: screenSchedule,
-    search: screenSearch,
-    adjust: screenAdjust,
-  };
-  Object.values(screens).forEach((el) => el.classList.remove("screen-active", "active"));
-  const target = screens[screenName];
-  if (target) target.classList.add("screen-active", "active");
+function formatJP(d) {
+  const wd = ["日", "月", "火", "水", "木", "金", "土"][d.getDay()];
+  return `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日（${wd}）`;
 }
 
-// ===== カレンダー描画 =====
+/* =========================================================
+   カレンダー描画
+========================================================= */
+
+let currentDate = new Date(); // 今表示している月
+let lastTap = 0;
+let lastTapKey = null;
+
 function renderCalendar() {
-  const year = currentDate.getFullYear();
-  const month = currentDate.getMonth(); // 0-11
+  // 今日表示
+  todayLabel.textContent = formatJP(new Date());
 
-  monthLabel.textContent = `${year}年${month + 1}月`;
+  const y = currentDate.getFullYear();
+  const m = currentDate.getMonth() + 1;
+  monthLabel.textContent = `${y}年${m}月`;
 
-  // 1日の曜日
-  const firstDay = new Date(year, month, 1);
-  const startWeekday = firstDay.getDay(); // 0(日)〜6(土)
-  // 月末日
-  const lastDay = new Date(year, month + 1, 0).getDate();
-
-  // 前月の末日
-  const prevLastDay = new Date(year, month, 0).getDate();
-
+  // カレンダー生成
   calendarGrid.innerHTML = "";
+  const first = new Date(y, m - 1, 1);
+  const firstDay = first.getDay();
+  const prevLast = new Date(y, m - 1, 0).getDate();
+  const thisLast = new Date(y, m, 0).getDate();
 
-  const totalCells = 42; // 7×6
-  let dayNum = 1;
-  let nextMonthDay = 1;
-
-  for (let i = 0; i < totalCells; i++) {
+  for (let i = 0; i < 42; i++) {
     const cell = document.createElement("div");
     cell.className = "day-cell";
 
-    let thisDate;
-    let displayNum;
-    let isOut = false;
+    let dayNum;
+    let cY = y;
+    let cM = m;
+    let inMonth = true;
 
-    if (i < startWeekday) {
-      // 前月
-      displayNum = prevLastDay - startWeekday + 1 + i;
-      thisDate = new Date(year, month - 1, displayNum);
-      isOut = true;
-    } else if (dayNum > lastDay) {
-      // 次月
-      displayNum = nextMonthDay++;
-      thisDate = new Date(year, month + 1, displayNum);
-      isOut = true;
+    if (i < firstDay) {
+      dayNum = prevLast - (firstDay - 1 - i);
+      inMonth = false;
+      if (m === 1) cM = 12, cY = y - 1;
+      else cM = m - 1;
+      cell.classList.add("out");
+    } else if (i >= firstDay + thisLast) {
+      dayNum = i - (firstDay + thisLast - 1);
+      inMonth = false;
+      if (m === 12) cM = 1, cY = y + 1;
+      else cM = m + 1;
+      cell.classList.add("out");
     } else {
-      // 今月
-      displayNum = dayNum++;
-      thisDate = new Date(year, month, displayNum);
+      dayNum = i - firstDay + 1;
     }
 
-    const dateKey = formatDateKey(thisDate);
+    const key = dateKeyFromYMD(cY, cM, dayNum);
+    cell.dataset.key = key;
 
-    // 曜日クラス
-    const weekday = thisDate.getDay();
-    if (weekday === 0) cell.classList.add("sun");
-    if (weekday === 6) cell.classList.add("sat");
-    if (isOut) cell.classList.add("out");
+    // 曜日色
+    if (i % 7 === 0) cell.classList.add("sun");
+    if (i % 7 === 6) cell.classList.add("sat");
 
-    // 今日ハイライト
-    const today = new Date();
-    if (
-      thisDate.getFullYear() === today.getFullYear() &&
-      thisDate.getMonth() === today.getMonth() &&
-      thisDate.getDate() === today.getDate()
-    ) {
+    // 今日
+    if (key === dateKey(new Date())) {
       cell.classList.add("today");
     }
 
-    // 選択中
-    if (dateKey === selectedDateStr) {
-      cell.classList.add("selected");
-    }
+    // 日付数字
+    const num = document.createElement("div");
+    num.className = "day-num";
+    num.textContent = dayNum;
+    cell.appendChild(num);
 
-    // 中身
-    const numEl = document.createElement("div");
-    numEl.className = "day-num";
-    numEl.textContent = displayNum;
+    // タイトル
+    const tag = document.createElement("div");
+    tag.className = "day-tags";
+    tag.textContent = diaryData[key]?.title ?? "";
+    cell.appendChild(tag);
 
-    const tagsEl = document.createElement("div");
-    tagsEl.className = "day-tags";
-    const entry = cacheEntries[dateKey];
-    if (entry && entry.title) {
-      tagsEl.textContent = entry.title;
-    } else if (entry && entry.body) {
-      tagsEl.textContent = entry.body.slice(0, 18);
-    } else {
-      tagsEl.textContent = "";
-    }
-
-    cell.appendChild(numEl);
-    cell.appendChild(tagsEl);
-
-    // シングルタップで選択、ダブルタップで日記画面へ
-    let lastTapTime = 0;
-    cell.addEventListener("click", () => {
-      const now = Date.now();
-      const delta = now - lastTapTime;
-      lastTapTime = now;
-
-      selectedDateStr = dateKey;
-      renderCalendar(); // 選択ハイライト更新
-
-      if (delta < 280) {
-        // ダブルタップ / ダブルクリックとみなす
-        openDiaryScreen(dateKey);
-      }
-    });
+    // クリック（ダブルタップ判定つき）
+    cell.addEventListener("click", () => handleTap(key));
 
     calendarGrid.appendChild(cell);
   }
 }
 
-// ===== 日記画面オープン =====
-function openDiaryScreen(dateKey) {
-  selectedDateStr = dateKey;
-  const d = parseDateKey(dateKey);
-  diaryDateTitle.textContent = `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日の日記`;
+/* =========================================================
+   日記編集モーダル
+========================================================= */
 
-  const entry = cacheEntries[dateKey] || {};
-  diaryTitleInput.value = entry.title || "";
-  diaryBodyInput.value = entry.body || "";
-  sleepInput.value = entry.sleep || "";
-  wakeInput.value = entry.wake || "";
-  mealsInput.value = entry.meals || "";
+const diaryModal = document.createElement("dialog");
+diaryModal.className = "modal";
+document.body.appendChild(diaryModal);
 
-  switchScreen("diary");
+// モーダル内部（HTML生成）
+diaryModal.innerHTML = `
+  <form method="dialog" class="modal-body">
+    <div class="field-label">
+      <span id="modal-date"></span>
+      <input id="modal-title" type="text" placeholder="タイトル">
+    </div>
+    <div class="field-label">
+      <span>本文</span>
+      <textarea id="modal-body" rows="6"></textarea>
+    </div>
+    <div class="modal-actions">
+      <button type="button" class="danger-btn" id="modal-delete">削除</button>
+      <div class="flex-spacer"></div>
+      <button type="button" class="sub-btn" id="modal-cancel">閉じる</button>
+      <button type="submit" class="primary-btn" id="modal-save">保存</button>
+    </div>
+  </form>
+`;
+
+const modalDate = diaryModal.querySelector("#modal-date");
+const modalTitle = diaryModal.querySelector("#modal-title");
+const modalBody = diaryModal.querySelector("#modal-body");
+const modalDelete = diaryModal.querySelector("#modal-delete");
+const modalCancel = diaryModal.querySelector("#modal-cancel");
+const modalSave = diaryModal.querySelector("#modal-save");
+
+let editingKey = null;
+
+/* -----------------------------
+   モーダルを開く
+----------------------------- */
+function openDiary(key) {
+  editingKey = key;
+
+  modalDate.textContent = formatJP(new Date(key));
+
+  const entry = diaryData[key] ?? {};
+  modalTitle.value = entry.title ?? "";
+  modalBody.value = entry.body ?? "";
+
+  diaryModal.showModal();
 }
 
-// ===== 日記保存 =====
+/* -----------------------------
+   保存
+----------------------------- */
 async function saveDiary() {
-  const data = {
-    date: selectedDateStr,
-    title: diaryTitleInput.value.trim(),
-    body: diaryBodyInput.value.trim(),
-    sleep: sleepInput.value || "",
-    wake: wakeInput.value || "",
-    meals: mealsInput.value.trim(),
-    updatedAt: new Date().toISOString(),
-  };
+  if (!editingKey) return;
 
-  // 空なら削除扱いでもいいが、ここではそのまま保存
-  cacheEntries[selectedDateStr] = data;
-  saveLocalEntries();
+  const title = modalTitle.value.trim();
+  const body = modalBody.value.trim();
+
+  diaryData[editingKey] = { title, body };
+  saveLocalDiary();
   renderCalendar();
 
-  if (currentUserId) {
-    const ref = doc(db, "users", currentUserId, "entries", selectedDateStr);
-    await setDoc(ref, data, { merge: true });
-  }
-  alert("保存しました");
-}
-
-// ===== 日記削除 =====
-async function deleteDiary() {
-  if (!cacheEntries[selectedDateStr]) return;
-  if (!confirm("この日の記録を削除しますか？")) return;
-
-  delete cacheEntries[selectedDateStr];
-  saveLocalEntries();
-  renderCalendar();
-
-  if (currentUserId) {
-    const ref = doc(db, "users", currentUserId, "entries", selectedDateStr);
-    await setDoc(ref, { deleted: true }, { merge: true });
-  }
-  diaryTitleInput.value = "";
-  diaryBodyInput.value = "";
-  sleepInput.value = "";
-  wakeInput.value = "";
-  mealsInput.value = "";
-  alert("削除しました");
-}
-
-// ===== 検索 =====
-function renderSearchResults(keyword) {
-  searchResults.innerHTML = "";
-  if (!keyword) return;
-
-  const lower = keyword.toLowerCase();
-  const entries = Object.entries(cacheEntries)
-    .filter(([dateKey, e]) => {
-      if (!e || e.deleted) return false;
-      const text = `${e.title || ""} ${e.body || ""}`.toLowerCase();
-      return text.includes(lower);
-    })
-    .sort(([a], [b]) => (a < b ? 1 : -1)); // 新しい順
-
-  for (const [dateKey, e] of entries) {
-    const d = parseDateKey(dateKey);
-    const card = document.createElement("div");
-    card.className = "card";
-    const title = document.createElement("div");
-    title.className = "card-title";
-    title.textContent = e.title || `${d.getMonth() + 1}月${d.getDate()}日`;
-
-    const sub = document.createElement("div");
-    sub.className = "card-sub";
-    sub.textContent = (e.body || "").slice(0, 50);
-
-    card.appendChild(title);
-    card.appendChild(sub);
-
-    card.addEventListener("click", () => {
-      selectedDateStr = dateKey;
-      openDiaryScreen(dateKey);
+  if (currentUser) {
+    const ref = doc(db, "users", currentUser.uid, "entries", editingKey);
+    await setDoc(ref, {
+      title,
+      body,
+      updatedAt: serverTimestamp()
     });
-
-    searchResults.appendChild(card);
   }
+
+  diaryModal.close();
 }
+
+/* -----------------------------
+   削除
+----------------------------- */
+async function deleteDiary() {
+  if (!editingKey) return;
+
+  delete diaryData[editingKey];
+  saveLocalDiary();
+  renderCalendar();
+
+  if (currentUser) {
+    const ref = doc(db, "users", currentUser.uid, "entries", editingKey);
+    await deleteDoc(ref);
+  }
+
+  diaryModal.close();
+}
+
+modalSave.onclick = saveDiary;
+modalDelete.onclick = deleteDiary;
+modalCancel.onclick = () => diaryModal.close();
+
+/* =========================================================
+   ダブルタップ判定
+========================================================= */
+
+function handleTap(key) {
+  const now = Date.now();
+  if (lastTapKey === key && now - lastTap < 350) {
+    openDiary(key);
+  }
+  lastTapKey = key;
+  lastTap = now;
+}
+
+/* =========================================================
+   Firebase ログイン / ログアウト
+========================================================= */
+
+// Googleログイン
+googleLoginBtn.onclick = () => {
+  signInWithPopup(auth, provider)
+    .catch((err) => alert("ログインに失敗しました: " + err.message));
+};
+
+// 認証状態
+onAuthStateChanged(auth, async (user) => {
+  currentUser = user;
+
+  if (user) {
+    loginScreen.classList.add("hidden");
+    appScreen.classList.remove("hidden");
+
+    // Firestore から読み込み
+    await loadFromCloud();
+    renderCalendar();
+  } else {
+    // ログアウト → ローカルのみ
+    loginScreen.classList.remove("hidden");
+    appScreen.classList.add("hidden");
+
+    diaryData = loadLocalDiary();
+    renderCalendar();
+  }
+});
+
+/* -----------------------------
+   Firestore → ローカルへ読み込み
+----------------------------- */
+async function loadFromCloud() {
+  if (!currentUser) return;
+
+  const snap = await getDocs(
+    collection(db, "users", currentUser.uid, "entries")
+  );
+
+  snap.forEach((docSnap) => {
+    diaryData[docSnap.id] = {
+      title: docSnap.data().title ?? "",
+      body: docSnap.data().body ?? ""
+    };
+  });
+
+  saveLocalDiary();
+}
+
+/* =========================================================
+   タブ切替
+========================================================= */
+tabButtons.forEach((btn) => {
+  btn.addEventListener("click", () => {
+    const target = btn.dataset.target;
+
+    tabButtons.forEach((b) => b.classList.remove("tab-active"));
+    btn.classList.add("tab-active");
+
+    for (const key in screens) {
+      screens[key].classList.remove("screen-active");
+    }
+    screens[target].classList.add("screen-active");
+  });
+});
+
+/* =========================================================
+   月移動
+========================================================= */
+prevMonthBtn.onclick = () => {
+  currentDate.setMonth(currentDate.getMonth() - 1);
+  renderCalendar();
+};
+
+nextMonthBtn.onclick = () => {
+  currentDate.setMonth(currentDate.getMonth() + 1);
+  renderCalendar();
+};
+
+/* =========================================================
+   初期表示
+========================================================= */
+renderCalendar();
