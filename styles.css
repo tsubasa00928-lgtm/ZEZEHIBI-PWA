@@ -1,21 +1,21 @@
 :root {
   --bg-main: #02040a;
-  --bg-card: #0b1020;
-  --bg-card-soft: #111827;
+  --bg-card: #050814;
+  --bg-card-soft: #0b1020;
   --accent: #38bdf8;
-  --accent-soft: rgba(56, 189, 248, 0.16);
+  --accent-soft: rgba(56, 189, 248, 0.18);
   --text-main: #e5e7eb;
   --text-sub: #9ca3af;
   --danger: #f97373;
   --radius-xl: 22px;
   --radius-md: 14px;
   --radius-sm: 9px;
-  --shadow-soft: 0 14px 38px rgba(0, 0, 0, 0.7);
+  --shadow-soft: 0 18px 45px rgba(0, 0, 0, 0.85);
   --font-sans: system-ui, -apple-system, BlinkMacSystemFont,
     -apple-system, "SF Pro Text", sans-serif;
 }
 
-/* リセット */
+/* ---------- リセット & ベース ---------- */
 *,
 *::before,
 *::after {
@@ -30,6 +30,7 @@ body {
   font-family: var(--font-sans);
   background: var(--bg-main);
   color: var(--text-main);
+  /* 横スクロール禁止 + ダブルタップズーム抑制 */
   overflow-x: hidden;
   touch-action: manipulation;
 }
@@ -38,6 +39,7 @@ body {
   overscroll-behavior-y: contain;
 }
 
+/* ---------- ルートレイアウト ---------- */
 .app-root {
   min-height: 100vh;
   display: flex;
@@ -47,32 +49,43 @@ body {
   color: var(--text-main);
 }
 
-/* ヘッダー */
+/* ---------- ヘッダー ---------- */
 .top-bar {
-  padding: 12px 16px 4px;
+  padding: 10px 16px 4px;
 }
 
-.top-title {
-  font-size: 20px;
-  font-weight: 600;
-  letter-spacing: 0.2em;
+.app-title {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 0.24em;
 }
 
-.top-today {
+.app-subtitle {
+  margin-top: 2px;
   font-size: 11px;
   color: var(--text-sub);
 }
 
-/* メインエリア */
-.main-area {
-  flex: 1;
-  padding: 0 8px 72px; /* タブ分の余白を確保 */
-  overflow-y: auto;
+.today-label {
+  margin-top: 4px;
+  font-size: 11px;
+  color: var(--text-sub);
 }
 
-/* 画面切替 */
+/* ---------- メインエリア ---------- */
+.main-area {
+  flex: 1;
+  padding: 0 10px;
+  /* カレンダーを“1画面アプリ”にするためスクロール無し */
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 画面切り替え */
 .screen {
   display: none;
+  height: 100%;
 }
 
 .screen-active,
@@ -80,48 +93,53 @@ body {
   display: block;
 }
 
-/* 月ヘッダ */
+/* ---------- カレンダー画面 ---------- */
+
+.calendar-screen {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+/* 月ヘッダー */
 .month-header {
-  margin-top: 4px;
-  padding: 8px 10px;
+  margin-top: 6px;
+  padding: 8px 12px;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   border-radius: var(--radius-xl);
-  background: linear-gradient(
-    to right,
-    rgba(11, 15, 25, 0.98),
-    rgba(8, 47, 73, 0.92)
-  );
+  background: radial-gradient(circle at top left, #0b1220, #020617 70%);
   box-shadow: var(--shadow-soft);
 }
 
-.nav-btn {
+.month-nav-btn {
   width: 30px;
   height: 30px;
   border-radius: 999px;
   border: none;
-  background: rgba(9, 9, 15, 0.98);
+  background: rgba(2, 6, 23, 0.98);
   color: var(--accent);
+  font-size: 18px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 18px;
 }
 
 .month-label {
   flex: 1;
   text-align: center;
   font-weight: 600;
-  font-size: 16px;
+  font-size: 17px;
 }
 
 /* 曜日 */
 .weekday-row {
+  margin-top: 6px;
+  padding: 0 4px;
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  padding: 6px 6px 0;
-  font-size: 10px;
+  font-size: 11px;
   color: var(--text-sub);
 }
 
@@ -129,108 +147,117 @@ body {
   text-align: center;
 }
 
-.sun {
-  color: #f97373;
+.wd.sun {
+  color: #fb7185;
 }
 
-.sat {
+.wd.sat {
   color: #60a5fa;
 }
 
-/* カレンダー：上部をびっしり、固定 */
+/* ---- カレンダーを“びっしり”にする部分 ---- */
+/* カレンダーブロック全体を flex:1 にして、残り高さを全部食う */
+.calendar-wrapper {
+  margin-top: 4px;
+  padding: 4px 0 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+/* カレンダーグリッド：画面高に応じて自動で拡大 */
 .calendar-grid {
-  margin: 4px 4px 0;
+  flex: 1; /* ←ここがポイント：残り高さを全て埋める */
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  grid-template-rows: repeat(6, minmax(52px, 1fr));
+  grid-template-rows: repeat(6, 1fr);
   gap: 0;
   border-radius: 18px;
   overflow: hidden;
-  background: #02040a;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.75);
+  background: radial-gradient(circle at top, #020617, #02040a 65%);
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.9);
 }
 
-/* 日マス */
+/* 日付マス */
 .day-cell {
   position: relative;
-  padding: 4px 4px 4px;
-  border: 0.4px solid rgba(148, 163, 253, 0.14);
-  background: radial-gradient(circle at top, #0b1220 0, #02040a 55%);
+  padding: 3px 4px;
+  border: 0.4px solid rgba(30, 64, 175, 0.55);
+  background: radial-gradient(circle at top, #020617 0, #02040a 60%);
   font-size: 11px;
-  color: var(--text-main);
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
   gap: 3px;
-  user-select: none;
 }
 
-.day-cell.out {
-  opacity: 0.25;
+.day-cell.out-month {
+  opacity: 0.26;
 }
 
-.day-num {
+.day-number {
   font-size: 11px;
   font-weight: 500;
   text-align: right;
 }
 
-.day-cell.sun .day-num {
-  color: #f97373;
+.day-cell.sun .day-number {
+  color: #fb7185;
 }
-.day-cell.sat .day-num {
+
+.day-cell.sat .day-number {
   color: #60a5fa;
 }
 
 .day-cell.today {
-  border-color: var(--accent);
-  box-shadow: inset 0 0 0 1px rgba(56, 189, 248, 0.7);
-}
-
-.day-cell.selected {
-  background: linear-gradient(to bottom, #111827, #02040a);
+  border-color: #38bdf8;
   box-shadow: inset 0 0 0 1px rgba(56, 189, 248, 0.9);
 }
 
+.day-cell.selected {
+  background: linear-gradient(to bottom, #111827, #020617);
+}
+
+/* 日付マス内のタイトル（3行まで） */
 .day-tags {
   margin-top: 2px;
   font-size: 8px;
   line-height: 1.2;
-  color: #93c5fd;
+  color: #bfdbfe;
   overflow: hidden;
   display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 3;
 }
 
-/* サマリーバー */
+/* 選択日サマリ（カレンダー直下の細いバー） */
 .day-summary {
-  margin: 8px 6px 4px;
-  padding: 6px 8px;
+  margin-top: 6px;
+  padding: 6px 10px;
   border-radius: 14px;
-  background: rgba(6, 10, 19, 0.98);
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.7);
+  background: rgba(3, 7, 18, 0.96);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.85);
+  font-size: 11px;
   display: flex;
   align-items: center;
   gap: 10px;
-  font-size: 11px;
 }
 
-.badge {
-  padding: 2px 10px;
+.summary-badge {
+  padding: 3px 10px;
   border-radius: 999px;
   background: rgba(15, 23, 42, 1);
   color: var(--accent);
   font-size: 11px;
 }
 
-/* ボタン共通 */
+/* ---------- 共通ボタン ---------- */
 .primary-btn,
 .sub-btn,
 .danger-btn {
   border: none;
   border-radius: 999px;
-  padding: 6px 12px;
+  padding: 6px 14px;
   font-size: 11px;
   cursor: pointer;
 }
@@ -245,191 +272,186 @@ body {
   color: var(--text-sub);
 }
 
-.sub-btn.small {
-  padding: 4px 10px;
-  font-size: 10px;
-}
-
 .danger-btn {
   background: var(--danger);
   color: #111827;
 }
 
-/* カード系 */
-.card-list {
-  margin: 6px 6px 10px;
+/* ---------- 閲覧・編集 画面 ---------- */
+
+.detail-screen {
+  padding: 10px 4px 70px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
 }
 
-.card {
-  padding: 8px 10px;
-  border-radius: var(--radius-md);
-  background: var(--bg-card);
-  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.7);
-  font-size: 11px;
-}
-
-.card-title {
-  font-weight: 600;
-  margin-bottom: 4px;
-}
-
-.card-sub {
-  font-size: 10px;
-  color: var(--text-sub);
-}
-
-.settings-actions {
-  margin-top: 8px;
-  display: flex;
-  gap: 8px;
-}
-
-/* 編集画面 */
-.edit-header {
+.detail-header {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 8px 6px 0;
 }
 
-.edit-date-wrap {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.edit-date-main {
-  font-size: 16px;
+.detail-date {
+  font-size: 14px;
   font-weight: 600;
 }
 
-.edit-date-sub {
+.detail-weekday {
   font-size: 11px;
   color: var(--text-sub);
 }
 
-.edit-body {
-  padding: 10px 8px 16px;
+.detail-fields {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
 }
 
 .field-label {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
   font-size: 11px;
   color: var(--text-sub);
 }
 
-.field-label input,
-.field-label textarea {
-  border-radius: 10px;
-  border: 1px solid rgba(148, 163, 253, 0.24);
+.field-input,
+.field-textarea {
+  width: 100%;
+  margin-top: 4px;
+  border-radius: 12px;
+  border: 1px solid rgba(148, 163, 253, 0.35);
   background: rgba(3, 7, 18, 0.98);
   color: var(--text-main);
-  padding: 6px 8px;
+  padding: 7px 10px;
   font-size: 12px;
 }
 
-.field-label textarea {
+.field-textarea {
+  min-height: 120px;
   resize: vertical;
 }
 
-.edit-actions {
+.detail-actions {
   margin-top: 6px;
   display: flex;
-  align-items: center;
+  flex-wrap: wrap;
   gap: 8px;
 }
 
-.flex-spacer {
-  flex: 1;
+/* ---------- 検索画面 ---------- */
+
+.search-screen {
+  padding: 10px 4px 70px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
-/* 検索 */
 .section-header {
   display: flex;
-  align-items: center;
+  align-items: baseline;
   justify-content: space-between;
-  padding: 10px 8px 4px;
 }
 
 .section-header h2 {
   margin: 0;
-  font-size: 14px;
-}
-
-.search-panel {
-  padding: 0 8px 6px;
+  font-size: 16px;
 }
 
 .search-input {
   width: 100%;
-  padding: 7px 12px;
+  padding: 8px 12px;
   border-radius: 999px;
-  border: 1px solid rgba(148, 163, 253, 0.28);
-  background: #02040a;
+  border: 1px solid rgba(148, 163, 253, 0.4);
+  background: #020617;
   color: var(--text-main);
-  font-size: 11px;
+  font-size: 12px;
 }
 
-.search-grid {
+.search-result-list {
+  margin-top: 8px;
   display: flex;
   flex-direction: column;
   gap: 6px;
-  padding: 2px 6px 12px;
 }
 
-/* タブバー：ホームバーを避けて少し浮かせる */
+.search-card {
+  padding: 8px 10px;
+  border-radius: 14px;
+  background: var(--bg-card-soft);
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.8);
+  font-size: 12px;
+}
+
+.search-card-title {
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+
+.search-card-meta {
+  font-size: 10px;
+  color: var(--text-sub);
+}
+
+/* ---------- 設定画面 ---------- */
+
+.settings-screen {
+  padding: 10px 4px 70px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.settings-group {
+  padding: 8px 10px;
+  border-radius: 16px;
+  background: var(--bg-card-soft);
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.8);
+  font-size: 12px;
+}
+
+.settings-group h3 {
+  margin: 0 0 4px;
+  font-size: 14px;
+}
+
+/* ---------- タブバー（画面下固定） ---------- */
+
 .tab-bar {
   position: fixed;
   left: 10px;
   right: 10px;
   bottom: calc(env(safe-area-inset-bottom, 0px) + 8px);
   height: 50px;
-  padding: 4px 6px;
+  padding: 5px 8px;
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 4px;
-  border-radius: 18px;
-  background: rgba(3, 6, 14, 0.98);
-  box-shadow: 0 -2px 18px rgba(0, 0, 0, 0.85);
+  gap: 6px;
+  border-radius: 20px;
+  background: rgba(3, 6, 18, 0.98);
+  box-shadow: 0 -3px 20px rgba(0, 0, 0, 0.95);
   backdrop-filter: blur(18px);
   z-index: 50;
 }
 
-.tab-btn {
+.tab-button {
   border: none;
-  padding: 4px 2px 2px;
   border-radius: 14px;
-  font-size: 11px;
-  color: var(--text-sub);
   background: transparent;
+  color: var(--text-sub);
+  font-size: 11px;
   display: flex;
   align-items: center;
   justify-content: center;
+  padding: 4px 2px;
 }
 
-.tab-btn.tab-active,
-.tab-btn.active {
+.tab-button.active {
   background: var(--accent-soft);
   color: var(--accent);
   font-weight: 600;
 }
 
-/* インポートラベル */
-.import-label {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
-
-/* スクロールバー非表示（モバイル） */
+/* ---------- スクロールバー非表示 ---------- */
 ::-webkit-scrollbar {
   width: 0;
   height: 0;
