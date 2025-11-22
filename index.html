@@ -1,146 +1,109 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="utf-8" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
   <title>是々日々</title>
-  <meta name="viewport"
-        content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
-  <meta name="theme-color" content="#02040a" />
   <link rel="stylesheet" href="styles.css" />
-  <link rel="manifest" href="manifest.webmanifest" />
 </head>
+
 <body>
   <div class="app-root">
-    <!-- ヘッダー -->
-    <header class="top-bar">
-      <div>
-        <div class="top-title">是々日々</div>
-        <div class="top-today" id="todayLabel"></div>
-      </div>
-    </header>
 
-    <!-- メインエリア -->
-    <main class="main-area">
+    <!-- 上部ヘッダー -->
+    <div class="top-bar">
+      <div class="app-title">是々日々</div>
+      <div class="app-today" id="currentDateText"></div>
+    </div>
 
-      <!-- ① カレンダー画面 -->
-      <section id="screen-calendar" class="screen screen-active">
+    <!-- メイン画面 -->
+    <div class="main-area">
 
-        <!-- 月ナビ -->
+      <!-- カレンダースクリーン -->
+      <div class="screen active" id="screen-calendar">
+
+        <!-- 月ヘッダー -->
         <div class="month-header">
-          <button id="prevMonthBtn" class="nav-btn" aria-label="前の月へ">‹</button>
+          <button class="nav-btn" id="prevMonthBtn">‹</button>
           <div class="month-label" id="monthLabel"></div>
-          <button id="nextMonthBtn" class="nav-btn" aria-label="次の月へ">›</button>
+          <button class="nav-btn" id="nextMonthBtn">›</button>
         </div>
 
-        <!-- 曜日 -->
-        <div class="weekday-row">
-          <div class="wd sun">日</div>
-          <div class="wd">月</div>
-          <div class="wd">火</div>
-          <div class="wd">水</div>
-          <div class="wd">木</div>
-          <div class="wd">金</div>
-          <div class="wd sat">土</div>
-        </div>
+        <!-- カレンダー全体 -->
+        <div class="calendar-wrapper">
 
-        <!-- カレンダー本体 -->
-        <div id="calendarGrid" class="calendar-grid"></div>
-
-        <!-- 選択中の情報（簡易） -->
-        <div class="day-summary" id="daySummary">
-          <span class="badge" id="summaryDateBadge"></span>
-          <span id="summaryText">日付をタップすると選択されます。ダブルタップで編集画面へ。</span>
-        </div>
-      </section>
-
-      <!-- ② 閲覧・編集画面（フルページ） -->
-      <section id="screen-edit" class="screen">
-        <div class="edit-header">
-          <button id="backToCalendarBtn" class="sub-btn small">‹ カレンダーへ</button>
-          <div class="edit-date-wrap">
-            <div class="edit-date-main" id="editDateMain"></div>
-            <div class="edit-date-sub" id="editDateSub"></div>
+          <div class="weekday-row">
+            <div class="wd sun">日</div>
+            <div class="wd">月</div>
+            <div class="wd">火</div>
+            <div class="wd">水</div>
+            <div class="wd">木</div>
+            <div class="wd">金</div>
+            <div class="wd sat">土</div>
           </div>
+
+          <div class="calendar-grid" id="calendarGrid"></div>
+
         </div>
 
-        <div class="edit-body">
-          <label class="field-label">
-            タイトル
-            <input id="editTitle" type="text" placeholder="例：アプリ開発をした" />
-          </label>
+        <!-- 選択日のサマリ -->
+        <div class="day-summary" id="daySummary"></div>
 
-          <label class="field-label">
-            本文
-            <textarea id="editBody" rows="8"
-              placeholder="1日の出来事や感じたことを書いてください。"></textarea>
-          </label>
+      </div>
 
-          <div class="edit-actions">
-            <button id="deleteEntryBtn" class="danger-btn">削除</button>
-            <div class="flex-spacer"></div>
-            <button id="saveEntryBtn" class="primary-btn">保存</button>
-          </div>
+      <!-- 閲覧・編集画面 -->
+      <div class="screen" id="screen-editor">
+        <h2 id="editorDate"></h2>
+
+        <div class="field-label">
+          <span>タイトル</span>
+          <input id="entryTitle" type="text" />
         </div>
-      </section>
 
-      <!-- ③ 検索画面 -->
-      <section id="screen-search" class="screen">
+        <div class="field-label">
+          <span>本文</span>
+          <textarea id="entryBody" rows="8"></textarea>
+        </div>
+
+        <div class="modal-actions">
+          <button class="primary-btn" id="saveEntryBtn">保存</button>
+          <button class="danger-btn" id="deleteEntryBtn">削除</button>
+          <button class="sub-btn" id="cancelEditBtn">戻る</button>
+        </div>
+      </div>
+
+      <!-- 検索 -->
+      <div class="screen" id="screen-search">
         <div class="section-header">
           <h2>検索</h2>
         </div>
-        <div class="search-panel">
-          <input id="searchInput" class="search-input"
-                 placeholder="キーワードで日記を検索" />
-        </div>
-        <div id="searchResults" class="search-grid"></div>
-      </section>
+        <input id="searchInput" class="search-input" placeholder="キーワードで検索…" />
+        <div id="searchResults" class="card-list"></div>
+      </div>
 
-      <!-- ④ 設定画面 -->
-      <section id="screen-settings" class="screen">
+      <!-- 設定 -->
+      <div class="screen" id="screen-settings">
         <div class="section-header">
           <h2>設定</h2>
         </div>
 
-        <div class="card-list">
-          <!-- ログイン状態 -->
-          <article class="card">
-            <div class="card-title">アカウント</div>
-            <div class="card-sub" id="authStatus">未ログイン</div>
-            <div class="settings-actions">
-              <button id="loginBtn" class="primary-btn">Googleでログイン</button>
-              <button id="logoutBtn" class="sub-btn">ログアウト</button>
-            </div>
-          </article>
+        <button class="primary-btn" id="googleLoginBtn">Google ログイン</button>
+        <br />
+        <button class="sub-btn" id="exportBtn">データエクスポート</button>
+        <button class="sub-btn" id="importBtn">データインポート</button>
+      </div>
+    </div>
 
-          <!-- データのエクスポート / インポート -->
-          <article class="card">
-            <div class="card-title">データのバックアップ</div>
-            <div class="card-sub">
-              端末の全ての日記データを JSON 形式で書き出したり、読み込んだりできます。
-            </div>
-            <div class="settings-actions">
-              <button id="exportBtn" class="sub-btn">エクスポート</button>
-
-              <label class="import-label sub-btn">
-                インポート
-                <input id="importInput" type="file" accept="application/json" hidden />
-              </label>
-            </div>
-          </article>
-        </div>
-      </section>
-    </main>
-
-    <!-- 下タブ -->
-    <nav class="tab-bar">
-      <button class="tab-btn tab-active" data-target="calendar">カレンダー</button>
-      <button class="tab-btn" data-target="edit">閲覧・編集</button>
+    <!-- 下部タブバー -->
+    <div class="tab-bar">
+      <button class="tab-btn active" data-target="calendar">カレンダー</button>
+      <button class="tab-btn" data-target="editor">閲覧・編集</button>
       <button class="tab-btn" data-target="search">検索</button>
       <button class="tab-btn" data-target="settings">設定</button>
-    </nav>
+    </div>
+
   </div>
 
-  <!-- アプリ本体 -->
-  <script type="module" src="app.js"></script>
+  <script src="app.js"></script>
 </body>
 </html>
