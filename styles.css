@@ -1,19 +1,18 @@
 :root {
   --bg-main: #02040a;
-  --bg-card: #050816;
-  --bg-card-soft: #0b1020;
+  --bg-card: #0b1020;
+  --bg-card-soft: #111827;
   --accent: #38bdf8;
   --accent-soft: rgba(56, 189, 248, 0.16);
-  --accent-strong: #0ea5e9;
   --text-main: #e5e7eb;
   --text-sub: #9ca3af;
   --danger: #f97373;
   --radius-xl: 22px;
   --radius-md: 14px;
   --radius-sm: 9px;
-  --shadow-soft: 0 18px 40px rgba(0, 0, 0, 0.8);
-  --font-sans: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text",
-    "Noto Sans JP", sans-serif;
+  --shadow-soft: 0 14px 38px rgba(0, 0, 0, 0.7);
+  --font-sans: system-ui, -apple-system, BlinkMacSystemFont,
+    -apple-system, "SF Pro Text", sans-serif;
 }
 
 /* リセット */
@@ -31,12 +30,14 @@ body {
   font-family: var(--font-sans);
   background: var(--bg-main);
   color: var(--text-main);
+  /* 横スクロール禁止 */
   overflow-x: hidden;
-  touch-action: manipulation; /* ダブルタップズームなど抑制 */
+  /* ダブルタップズームなど抑制 */
+  touch-action: manipulation;
 }
 
 body {
-  overscroll-behavior-y: contain; /* 画面ブレ防止 */
+  overscroll-behavior-y: contain;
 }
 
 /* ルート */
@@ -45,15 +46,13 @@ body {
   display: flex;
   flex-direction: column;
   background:
-    radial-gradient(circle at 0% -20%, rgba(56, 189, 248, 0.08) 0, transparent 55%),
-    radial-gradient(circle at 100% 120%, rgba(59, 130, 246, 0.2) 0, transparent 60%),
-    radial-gradient(circle at 50% 0%, #020617 0, #02040a 55%, #010308 100%);
+    radial-gradient(circle at top, #020817 0, #02040a 40%, #010308 100%);
   color: var(--text-main);
 }
 
 /* ヘッダー */
 .top-bar {
-  padding: 10px 14px 6px;
+  padding: 10px 14px 2px;
   display: flex;
   justify-content: space-between;
   align-items: baseline;
@@ -73,7 +72,7 @@ body {
 /* メインエリア */
 .main-area {
   flex: 1;
-  padding: 0 6px 60px; /* 下タブ分の余白 */
+  padding: 0 6px 72px; /* 下はタブバー分の余白 */
   overflow-y: auto;
 }
 
@@ -85,6 +84,13 @@ body {
 .screen-active,
 .screen.active {
   display: block;
+}
+
+/* カレンダー画面は縦方向flexにしてカレンダーをびっしり伸ばす */
+#screen-calendar {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
 }
 
 /* 月ヘッダー */
@@ -123,6 +129,10 @@ body {
   font-size: 16px;
 }
 
+.month-label.small {
+  font-size: 13px;
+}
+
 /* 曜日 */
 .weekday-row {
   display: grid;
@@ -144,17 +154,22 @@ body {
   color: #60a5fa;
 }
 
-/* カレンダー：7×6、隙間ゼロでびっしり */
+/* カレンダー：7×6、隙間ゼロ、画面下半分までびっしり */
 .calendar-grid {
   margin: 2px 4px 0;
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  grid-template-rows: repeat(6, minmax(44px, 1fr));
+  grid-template-rows: repeat(6, 1fr);
   gap: 0;
-  border-radius: 18px;
+  border-radius: 16px;
   overflow: hidden;
   background: #02040a;
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.85);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.75);
+
+  /* ここがポイント：高さを固定して6行を均等に伸ばす */
+  /* ヘッダーやサマリー、タブの分をざっくり引いた値。
+     高さが足りなければ 260px を少し小さくして調整してOK */
+  height: calc(100vh - 260px);
 }
 
 /* 日マス */
@@ -162,19 +177,17 @@ body {
   position: relative;
   padding: 2px 2px 2px;
   border: 0.4px solid rgba(148, 163, 253, 0.12);
-  background:
-    radial-gradient(circle at top, #020617 0, #02040a 55%);
+  background: radial-gradient(circle at top, #0b1220 0, #02040a 55%);
   font-size: 10px;
   color: var(--text-main);
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
   gap: 1px;
-  user-select: none;
 }
 
 .day-cell.out {
-  opacity: 0.26;
+  opacity: 0.24;
 }
 
 .day-num {
@@ -197,14 +210,14 @@ body {
 }
 
 .day-cell.selected {
-  background: linear-gradient(to bottom, #0b1120, #02040a);
+  background: linear-gradient(to bottom, #111827, #02040a);
   box-shadow: inset 0 0 0 1px rgba(56, 189, 248, 0.9);
 }
 
-/* 日マス内タイトル（最大2〜3行） */
+/* 日マス内タイトル（最大3行） */
 .day-tags {
   font-size: 7.5px;
-  line-height: 1.25;
+  line-height: 1.2;
   color: #93c5fd;
   overflow: hidden;
   display: -webkit-box;
@@ -214,9 +227,9 @@ body {
 
 /* 選択日サマリ */
 .day-summary {
-  margin: 8px 6px 8px;
+  margin: 8px 6px 4px;
   padding: 6px 8px;
-  border-radius: 14px;
+  border-radius: 12px;
   background: rgba(6, 10, 19, 0.98);
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.7);
   display: flex;
@@ -229,18 +242,18 @@ body {
   padding: 2px 8px;
   border-radius: 999px;
   background: rgba(15, 23, 42, 1);
-  color: var(--accent-strong);
+  color: var(--accent);
   font-size: 10px;
 }
 
-/* 共通ボタン */
+/* ボタン */
 .primary-btn,
 .sub-btn,
 .danger-btn {
   border: none;
   border-radius: 999px;
-  padding: 5px 12px;
-  font-size: 11px;
+  padding: 5px 10px;
+  font-size: 10px;
   cursor: pointer;
 }
 
@@ -259,45 +272,70 @@ body {
   color: #111827;
 }
 
-/* エディタ画面 */
-.section-header {
+/* カードリスト（検索などで使用） */
+.card-list {
+  margin: 4px 6px 10px;
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 8px 8px 4px;
+  flex-direction: column;
+  gap: 6px;
 }
 
-.section-header h2 {
-  margin: 0;
-  font-size: 14px;
-}
-
-.editor-panel {
-  margin: 0 8px 14px;
-  padding: 10px 10px 12px;
-  border-radius: 18px;
+.card {
+  padding: 6px 8px;
+  border-radius: var(--radius-md);
   background: var(--bg-card);
-  box-shadow: var(--shadow-soft);
-  font-size: 11px;
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.7);
+  font-size: 10px;
+}
+
+.card-title {
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+
+.card-sub {
+  font-size: 9px;
+  color: var(--text-sub);
+}
+
+/* モーダル */
+.modal {
+  border: none;
+  padding: 0;
+  border-radius: 22px;
+  background: radial-gradient(circle at top, #020817, #02040a);
+  color: var(--text-main);
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.95);
+}
+
+.modal::backdrop {
+  background: rgba(0, 0, 0, 0.68);
+}
+
+.modal-body {
+  padding: 14px 14px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  font-size: 10px;
 }
 
 .field-label {
   display: flex;
   flex-direction: column;
-  gap: 3px;
-  font-size: 11px;
+  gap: 2px;
+  font-size: 9px;
   color: var(--text-sub);
-  margin-bottom: 8px;
 }
 
 .field-label input,
 .field-label textarea {
   border-radius: 10px;
-  border: 1px solid rgba(148, 163, 253, 0.28);
+  border: 1px solid rgba(148, 163, 253, 0.24);
   background: rgba(3, 7, 18, 0.98);
   color: var(--text-main);
-  padding: 6px 8px;
-  font-size: 11px;
+  padding: 5px 7px;
+  font-size: 10px;
 }
 
 .field-label textarea {
@@ -310,98 +348,109 @@ body {
   gap: 6px;
 }
 
+.grid-3 {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px;
+}
+
 .modal-actions {
   display: flex;
   align-items: center;
   gap: 6px;
-  margin-top: 8px;
+  margin-top: 4px;
 }
 
 .flex-spacer {
   flex: 1;
 }
 
-.save-status {
-  margin-top: 6px;
-  font-size: 10px;
-  color: var(--text-sub);
+.field-inline {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 9px;
 }
 
 /* 検索 */
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 8px 2px;
+}
+
+.section-header h2 {
+  margin: 0;
+  font-size: 14px;
+}
+
 .search-panel {
   padding: 0 8px 4px;
 }
 
 .search-input {
   width: 100%;
-  padding: 7px 11px;
+  padding: 6px 10px;
   border-radius: 999px;
   border: 1px solid rgba(148, 163, 253, 0.28);
   background: #02040a;
   color: var(--text-main);
-  font-size: 11px;
+  font-size: 10px;
 }
 
-.search-results {
-  padding: 4px 6px 10px;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
+.search-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+  padding: 2px 6px 10px;
 }
 
-.result-card {
-  padding: 7px 9px;
-  border-radius: 14px;
-  background: var(--bg-card-soft);
-  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.75);
-  font-size: 11px;
-  cursor: pointer;
-}
-
-.result-title {
-  font-weight: 600;
-  margin-bottom: 2px;
-}
-
-.result-meta {
+.sub-heading {
+  margin: 0 0 4px;
   font-size: 10px;
   color: var(--text-sub);
 }
 
-/* 設定 */
-.settings-group {
-  margin: 6px 8px 10px;
-  padding: 10px 10px 12px;
-  border-radius: 16px;
-  background: var(--bg-card);
-  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.75);
+/* 調整タブ */
+.coord-header {
+  margin: 8px 6px 4px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 
-.settings-group h3 {
-  margin: 0 0 4px;
-  font-size: 13px;
+.bands-list {
+  margin: 4px 6px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 9px;
 }
 
-.settings-text {
-  margin: 0 0 8px;
-  font-size: 11px;
-  color: var(--text-sub);
+.band-row {
+  padding: 4px 8px;
+  border-radius: 12px;
+  background: var(--bg-card-soft);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
-/* タブバー：ホームバーと被らないように浮かせる */
+/* タブバー：ホームバーと被らないように少し浮かせる */
 .tab-bar {
   position: fixed;
   left: 10px;
   right: 10px;
   bottom: calc(env(safe-area-inset-bottom, 0px) + 8px);
-  height: 48px;
+  height: 46px;
   padding: 4px 6px;
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 4px;
   border-radius: 18px;
   background: rgba(3, 6, 14, 0.98);
-  box-shadow: 0 -2px 20px rgba(0, 0, 0, 0.9);
+  box-shadow: 0 -2px 18px rgba(0, 0, 0, 0.85);
   backdrop-filter: blur(18px);
   z-index: 50;
 }
@@ -409,9 +458,9 @@ body {
 /* タブボタンを大きく押しやすく */
 .tab-btn {
   border: none;
-  padding: 4px 4px 2px;
+  padding: 4px 2px 2px;
   border-radius: 14px;
-  font-size: 11px;
+  font-size: 10px;
   color: var(--text-sub);
   background: transparent;
   display: flex;
@@ -422,7 +471,7 @@ body {
 .tab-btn.tab-active,
 .tab-btn.active {
   background: var(--accent-soft);
-  color: var(--accent-strong);
+  color: var(--accent);
   font-weight: 600;
 }
 
@@ -430,17 +479,4 @@ body {
 ::-webkit-scrollbar {
   width: 0;
   height: 0;
-}
-
-/* 小さい画面向け微調整 */
-@media (max-width: 360px) {
-  .month-label {
-    font-size: 14px;
-  }
-  .day-summary {
-    font-size: 9px;
-  }
-  .tab-bar {
-    height: 46px;
-  }
 }
