@@ -30,9 +30,7 @@ body {
   font-family: var(--font-sans);
   background: var(--bg-main);
   color: var(--text-main);
-  /* 横スクロール禁止 */
   overflow-x: hidden;
-  /* ダブルタップズームなど抑制 */
   touch-action: manipulation;
 }
 
@@ -40,7 +38,6 @@ body {
   overscroll-behavior-y: contain;
 }
 
-/* ルート */
 .app-root {
   min-height: 100vh;
   display: flex;
@@ -52,16 +49,13 @@ body {
 
 /* ヘッダー */
 .top-bar {
-  padding: 10px 14px 2px;
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
+  padding: 12px 16px 4px;
 }
 
 .top-title {
-  font-size: 18px;
+  font-size: 20px;
   font-weight: 600;
-  letter-spacing: 0.16em;
+  letter-spacing: 0.2em;
 }
 
 .top-today {
@@ -72,11 +66,11 @@ body {
 /* メインエリア */
 .main-area {
   flex: 1;
-  padding: 0 6px 72px; /* 下はタブバー分の余白 */
+  padding: 0 8px 72px; /* タブ分の余白を確保 */
   overflow-y: auto;
 }
 
-/* 画面切り替え */
+/* 画面切替 */
 .screen {
   display: none;
 }
@@ -86,17 +80,10 @@ body {
   display: block;
 }
 
-/* カレンダー画面は縦方向flexにしてカレンダーをびっしり伸ばす */
-#screen-calendar {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-}
-
-/* 月ヘッダー */
+/* 月ヘッダ */
 .month-header {
   margin-top: 4px;
-  padding: 6px 10px;
+  padding: 8px 10px;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -110,8 +97,8 @@ body {
 }
 
 .nav-btn {
-  width: 26px;
-  height: 26px;
+  width: 30px;
+  height: 30px;
   border-radius: 999px;
   border: none;
   background: rgba(9, 9, 15, 0.98);
@@ -119,7 +106,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 16px;
+  font-size: 18px;
 }
 
 .month-label {
@@ -129,15 +116,11 @@ body {
   font-size: 16px;
 }
 
-.month-label.small {
-  font-size: 13px;
-}
-
 /* 曜日 */
 .weekday-row {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  padding: 4px 6px 0;
+  padding: 6px 6px 0;
   font-size: 10px;
   color: var(--text-sub);
 }
@@ -154,47 +137,42 @@ body {
   color: #60a5fa;
 }
 
-/* カレンダー：7×6、隙間ゼロ、画面下半分までびっしり */
+/* カレンダー：上部をびっしり、固定 */
 .calendar-grid {
-  margin: 2px 4px 0;
+  margin: 4px 4px 0;
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  grid-template-rows: repeat(6, 1fr);
+  grid-template-rows: repeat(6, minmax(52px, 1fr));
   gap: 0;
-  border-radius: 16px;
+  border-radius: 18px;
   overflow: hidden;
   background: #02040a;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.75);
-
-  /* ここがポイント：高さを固定して6行を均等に伸ばす */
-  /* ヘッダーやサマリー、タブの分をざっくり引いた値。
-     高さが足りなければ 260px を少し小さくして調整してOK */
-  height: calc(100vh - 260px);
 }
 
 /* 日マス */
 .day-cell {
   position: relative;
-  padding: 2px 2px 2px;
-  border: 0.4px solid rgba(148, 163, 253, 0.12);
+  padding: 4px 4px 4px;
+  border: 0.4px solid rgba(148, 163, 253, 0.14);
   background: radial-gradient(circle at top, #0b1220 0, #02040a 55%);
-  font-size: 10px;
+  font-size: 11px;
   color: var(--text-main);
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
-  gap: 1px;
+  gap: 3px;
+  user-select: none;
 }
 
 .day-cell.out {
-  opacity: 0.24;
+  opacity: 0.25;
 }
 
 .day-num {
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 500;
   text-align: right;
-  padding-right: 3px;
 }
 
 .day-cell.sun .day-num {
@@ -205,8 +183,8 @@ body {
 }
 
 .day-cell.today {
-  border-color: #38bdf8;
-  box-shadow: inset 0 0 0 1px rgba(56, 189, 248, 0.6);
+  border-color: var(--accent);
+  box-shadow: inset 0 0 0 1px rgba(56, 189, 248, 0.7);
 }
 
 .day-cell.selected {
@@ -214,9 +192,9 @@ body {
   box-shadow: inset 0 0 0 1px rgba(56, 189, 248, 0.9);
 }
 
-/* 日マス内タイトル（最大3行） */
 .day-tags {
-  font-size: 7.5px;
+  margin-top: 2px;
+  font-size: 8px;
   line-height: 1.2;
   color: #93c5fd;
   overflow: hidden;
@@ -225,35 +203,35 @@ body {
   -webkit-line-clamp: 3;
 }
 
-/* 選択日サマリ */
+/* サマリーバー */
 .day-summary {
   margin: 8px 6px 4px;
   padding: 6px 8px;
-  border-radius: 12px;
+  border-radius: 14px;
   background: rgba(6, 10, 19, 0.98);
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.7);
   display: flex;
   align-items: center;
   gap: 10px;
-  font-size: 10px;
+  font-size: 11px;
 }
 
 .badge {
-  padding: 2px 8px;
+  padding: 2px 10px;
   border-radius: 999px;
   background: rgba(15, 23, 42, 1);
   color: var(--accent);
-  font-size: 10px;
+  font-size: 11px;
 }
 
-/* ボタン */
+/* ボタン共通 */
 .primary-btn,
 .sub-btn,
 .danger-btn {
   border: none;
   border-radius: 999px;
-  padding: 5px 10px;
-  font-size: 10px;
+  padding: 6px 12px;
+  font-size: 11px;
   cursor: pointer;
 }
 
@@ -267,64 +245,84 @@ body {
   color: var(--text-sub);
 }
 
+.sub-btn.small {
+  padding: 4px 10px;
+  font-size: 10px;
+}
+
 .danger-btn {
   background: var(--danger);
   color: #111827;
 }
 
-/* カードリスト（検索などで使用） */
+/* カード系 */
 .card-list {
-  margin: 4px 6px 10px;
+  margin: 6px 6px 10px;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
 }
 
 .card {
-  padding: 6px 8px;
+  padding: 8px 10px;
   border-radius: var(--radius-md);
   background: var(--bg-card);
   box-shadow: 0 8px 22px rgba(0, 0, 0, 0.7);
-  font-size: 10px;
+  font-size: 11px;
 }
 
 .card-title {
   font-weight: 600;
-  margin-bottom: 2px;
+  margin-bottom: 4px;
 }
 
 .card-sub {
-  font-size: 9px;
+  font-size: 10px;
   color: var(--text-sub);
 }
 
-/* モーダル */
-.modal {
-  border: none;
-  padding: 0;
-  border-radius: 22px;
-  background: radial-gradient(circle at top, #020817, #02040a);
-  color: var(--text-main);
-  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.95);
+.settings-actions {
+  margin-top: 8px;
+  display: flex;
+  gap: 8px;
 }
 
-.modal::backdrop {
-  background: rgba(0, 0, 0, 0.68);
+/* 編集画面 */
+.edit-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 6px 0;
 }
 
-.modal-body {
-  padding: 14px 14px 10px;
+.edit-date-wrap {
   display: flex;
   flex-direction: column;
-  gap: 7px;
-  font-size: 10px;
+  gap: 2px;
+}
+
+.edit-date-main {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.edit-date-sub {
+  font-size: 11px;
+  color: var(--text-sub);
+}
+
+.edit-body {
+  padding: 10px 8px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
 .field-label {
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  font-size: 9px;
+  gap: 4px;
+  font-size: 11px;
   color: var(--text-sub);
 }
 
@@ -334,42 +332,23 @@ body {
   border: 1px solid rgba(148, 163, 253, 0.24);
   background: rgba(3, 7, 18, 0.98);
   color: var(--text-main);
-  padding: 5px 7px;
-  font-size: 10px;
+  padding: 6px 8px;
+  font-size: 12px;
 }
 
 .field-label textarea {
   resize: vertical;
 }
 
-.grid-2 {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 6px;
-}
-
-.grid-3 {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 4px;
-}
-
-.modal-actions {
+.edit-actions {
+  margin-top: 6px;
   display: flex;
   align-items: center;
-  gap: 6px;
-  margin-top: 4px;
+  gap: 8px;
 }
 
 .flex-spacer {
   flex: 1;
-}
-
-.field-inline {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 9px;
 }
 
 /* 検索 */
@@ -377,7 +356,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 8px 8px 2px;
+  padding: 10px 8px 4px;
 }
 
 .section-header h2 {
@@ -386,64 +365,33 @@ body {
 }
 
 .search-panel {
-  padding: 0 8px 4px;
+  padding: 0 8px 6px;
 }
 
 .search-input {
   width: 100%;
-  padding: 6px 10px;
+  padding: 7px 12px;
   border-radius: 999px;
   border: 1px solid rgba(148, 163, 253, 0.28);
   background: #02040a;
   color: var(--text-main);
-  font-size: 10px;
+  font-size: 11px;
 }
 
 .search-grid {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 8px;
-  padding: 2px 6px 10px;
-}
-
-.sub-heading {
-  margin: 0 0 4px;
-  font-size: 10px;
-  color: var(--text-sub);
-}
-
-/* 調整タブ */
-.coord-header {
-  margin: 8px 6px 4px;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.bands-list {
-  margin: 4px 6px 10px;
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  font-size: 9px;
+  gap: 6px;
+  padding: 2px 6px 12px;
 }
 
-.band-row {
-  padding: 4px 8px;
-  border-radius: 12px;
-  background: var(--bg-card-soft);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-/* タブバー：ホームバーと被らないように少し浮かせる */
+/* タブバー：ホームバーを避けて少し浮かせる */
 .tab-bar {
   position: fixed;
   left: 10px;
   right: 10px;
   bottom: calc(env(safe-area-inset-bottom, 0px) + 8px);
-  height: 46px;
+  height: 50px;
   padding: 4px 6px;
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -455,12 +403,11 @@ body {
   z-index: 50;
 }
 
-/* タブボタンを大きく押しやすく */
 .tab-btn {
   border: none;
   padding: 4px 2px 2px;
   border-radius: 14px;
-  font-size: 10px;
+  font-size: 11px;
   color: var(--text-sub);
   background: transparent;
   display: flex;
@@ -475,7 +422,14 @@ body {
   font-weight: 600;
 }
 
-/* スクロールバー非表示（モバイル向け） */
+/* インポートラベル */
+.import-label {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* スクロールバー非表示（モバイル） */
 ::-webkit-scrollbar {
   width: 0;
   height: 0;
