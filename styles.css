@@ -72,7 +72,7 @@ body {
   padding: 0;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  overflow: hidden; /* ここがポイント：中身は flex でレイアウト */
 }
 
 /* 画面切り替え */
@@ -85,6 +85,7 @@ body {
   display: flex;
   flex-direction: column;
   flex: 1;
+  min-height: 0; /* カレンダーを伸ばすための余白制御 */
 }
 
 /* --- カレンダースクリーン --- */
@@ -92,6 +93,7 @@ body {
   flex: 1;
   display: flex;
   flex-direction: column;
+  min-height: 0;
 }
 
 /* 月ヘッダー */
@@ -155,13 +157,12 @@ body {
   color: #60a5fa;
 }
 
-/* カレンダー全体：高さを viewport ベースで指定して下の余白を潰す */
+/* カレンダー全体：残り高さをすべてここに渡す */
 .calendar-shell {
-  flex: 0 0 auto;
+  flex: 1;              /* ← 高さを flex で確保 */
+  min-height: 0;        /* 子要素に高さを渡すため */
   padding: 4px 8px 0;
   display: flex;
-  height: calc(100vh - 320px);
-  /* 必要なら 300〜340px くらいで微調整 */
 }
 
 /* カレンダー本体（グリッド） */
@@ -175,7 +176,7 @@ body {
   overflow: hidden;
   background: #02040a;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.75);
-  height: 100%;
+  height: 100%;         /* 親（calendar-shell）の高さにフィット */
 }
 
 /* 日マス */
@@ -231,7 +232,7 @@ body {
   -webkit-line-clamp: 3;
 }
 
-/* 選択日サマリ：下に寄せるため余白を小さく */
+/* 選択日サマリ：下に寄せる */
 .day-summary {
   flex-shrink: 0;
   margin: 4px 10px 6px;
