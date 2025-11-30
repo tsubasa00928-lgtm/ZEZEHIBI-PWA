@@ -30,9 +30,7 @@ body {
   font-family: var(--font-sans);
   background: var(--bg-main);
   color: var(--text-main);
-  /* 横スクロール禁止 */
   overflow-x: hidden;
-  /* ダブルタップズームなど抑制 */
   touch-action: manipulation;
 }
 
@@ -68,7 +66,7 @@ body {
   color: var(--text-sub);
 }
 
-/* メインエリア：縦方向をフルに使う */
+/* メインエリア */
 .main-area {
   flex: 1;
   padding: 0;
@@ -157,11 +155,13 @@ body {
   color: #60a5fa;
 }
 
-/* カレンダー全体をフル画面に近づけるラッパー */
+/* カレンダー全体：高さを viewport ベースで指定して下の余白を潰す */
 .calendar-shell {
-  flex: 1;
+  flex: 0 0 auto;
+  padding: 4px 8px 0;
   display: flex;
-  padding: 2px 8px 0;
+  height: calc(100vh - 320px);
+  /* 必要なら 300〜340px くらいで微調整 */
 }
 
 /* カレンダー本体（グリッド） */
@@ -169,13 +169,13 @@ body {
   flex: 1;
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  /* 6行固定で、縦方向をびっしり使う */
   grid-template-rows: repeat(6, 1fr);
   gap: 0;
   border-radius: 18px;
   overflow: hidden;
   background: #02040a;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.75);
+  height: 100%;
 }
 
 /* 日マス */
@@ -231,10 +231,10 @@ body {
   -webkit-line-clamp: 3;
 }
 
-/* 選択日サマリ（カレンダーの下、常に高さ固定） */
+/* 選択日サマリ：下に寄せるため余白を小さく */
 .day-summary {
   flex-shrink: 0;
-  margin: 8px 10px 6px;
+  margin: 4px 10px 6px;
   padding: 8px 10px;
   border-radius: 14px;
   background: rgba(6, 10, 19, 0.98);
@@ -279,7 +279,7 @@ body {
   color: #111827;
 }
 
-/* --- 閲覧・編集／検索など共通カード --- */
+/* --- 共通カード（閲覧・編集／検索など） --- */
 .card-list {
   margin: 8px 10px 16px;
   display: flex;
@@ -426,7 +426,7 @@ body {
   color: var(--text-sub);
 }
 
-/* --- 調整タブなど --- */
+/* --- 調整タブ --- */
 .coord-header {
   margin: 8px 10px 4px;
   display: flex;
