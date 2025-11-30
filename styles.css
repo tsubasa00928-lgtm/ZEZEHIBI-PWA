@@ -85,7 +85,7 @@ body {
 
 /* ===== カレンダー画面 ===== */
 
-#calendarScreen {
+#screenCalendar {
   display: flex;
   flex-direction: column;
   height: 100%;
@@ -244,7 +244,7 @@ body {
 
 /* ===== 閲覧・編集画面 ===== */
 
-#editorScreen {
+#screenEdit {
   padding: 8px 4px 4px;
   overflow-y: auto;
 }
