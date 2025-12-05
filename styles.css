@@ -213,7 +213,7 @@ body {
 }
 
 .day-num {
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 500;
   text-align: right;
   padding-right: 4px;
@@ -470,3 +470,4 @@ body {
   width: 0;
   height: 0;
 }
+
